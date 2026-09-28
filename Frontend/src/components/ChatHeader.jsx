@@ -5,7 +5,6 @@ import {
   Menu,
   ChevronDown,
   Sparkles,
-  Sliders,
   Sun,
   Moon,
   LogIn,
@@ -14,20 +13,20 @@ import {
   Cpu,
   ShieldCheck,
   Check,
-  UserPlus,
-  MessageSquare
+  MessageSquare,
+  Layers,
+  Settings
 } from 'lucide-react';
 
 export default function ChatHeader({
   onClearChat,
   messageCount,
-  // Workspace Mode (Chat vs Research & Synthesis)
   workspaceMode = 'chat',
   onWorkspaceModeChange,
   activeDocument = null,
-  // Model Tier Selector
   modelTier = 'flash',
   onModelTierChange,
+  user = null,
   onToggleSidebar,
   onOpenSettings,
   theme = 'dark',
@@ -50,30 +49,30 @@ export default function ChatHeader({
   const getModelLabel = () => {
     switch (modelTier) {
       case 'pro':
-        return "Afzal's AI Pro";
+        return "Afzal's AI 2.5 Pro";
       case 'ultra':
         return "Afzal's AI Ultra";
       case 'flash':
       default:
-        return "Afzal's AI Flash";
+        return "Afzal's AI 2.5 Flash";
     }
   };
 
   const TIERS = [
     {
       id: 'flash',
-      name: "Afzal's AI Flash",
-      badge: 'Flash',
+      name: "Afzal's AI 2.5 Flash",
+      badge: 'Active',
       badgeClass: 'flash',
-      icon: <Zap size={16} />,
+      icon: <Zap size={15} />,
       desc: 'Fast, responsive & smart assistant for rapid querying (Default)'
     },
     {
       id: 'pro',
-      name: "Afzal's AI Pro",
+      name: "Afzal's AI 2.5 Pro",
       badge: 'Pro',
       badgeClass: 'pro',
-      icon: <Cpu size={16} />,
+      icon: <Cpu size={15} />,
       desc: 'Advanced reasoning, deep web grounding & multi-step synthesis'
     },
     {
@@ -81,14 +80,14 @@ export default function ChatHeader({
       name: "Afzal's AI Ultra",
       badge: 'Ultra',
       badgeClass: 'ultra',
-      icon: <ShieldCheck size={16} />,
+      icon: <ShieldCheck size={15} />,
       desc: 'High-capacity context window for extensive document analysis'
     }
   ];
 
   return (
     <header className="gemini-header">
-      {/* Left: Hamburger, Brand, Model Selector, and Workspace Mode Segmented Selector */}
+      {/* Left: Menu, Brand, Model Selector */}
       <div className="gemini-header-left">
         <button
           type="button"
@@ -97,15 +96,15 @@ export default function ChatHeader({
           title="Main menu"
           aria-label="Toggle menu"
         >
-          <Menu size={20} />
+          <Menu size={19} />
         </button>
 
         <div className="gemini-brand-wrap">
-          <AppLogo size={30} />
+          <AppLogo size={26} />
           <span className="gemini-brand-name">Afzal's AI</span>
         </div>
 
-        {/* 4. Unified Model Selector Dropdown in Top Bar */}
+        {/* Model Selector Pill */}
         <div className="gemini-model-selector-wrap" ref={dropdownRef}>
           <button
             type="button"
@@ -115,6 +114,7 @@ export default function ChatHeader({
             aria-haspopup="true"
             title="Switch AI model tier"
           >
+            <span className="model-status-dot" />
             <span className="gemini-model-name">{getModelLabel()}</span>
             <ChevronDown size={14} className={`chevron-icon ${isModelDropdownOpen ? 'rotated' : ''}`} />
           </button>
@@ -141,7 +141,6 @@ export default function ChatHeader({
                     <div className="dropdown-item-content">
                       <div className="dropdown-item-header">
                         <span className="dropdown-item-title">{tier.name}</span>
-                        {/* Display tier badges strictly inside dropdown menu items */}
                         <span className={`model-tier-badge ${tier.badgeClass}`}>{tier.badge}</span>
                       </div>
                       <span className="dropdown-item-desc">{tier.desc}</span>
@@ -153,8 +152,10 @@ export default function ChatHeader({
             </div>
           )}
         </div>
+      </div>
 
-        {/* 2. Dual-Mode Central Workspace Segmented Toggle */}
+      {/* Center: 3-Segment Switcher (Chat | Research & Synthesis | Artifacts) */}
+      <div className="gemini-header-center">
         <div className="workspace-mode-selector" role="tablist" aria-label="Workspace Mode">
           <button
             type="button"
@@ -162,9 +163,9 @@ export default function ChatHeader({
             aria-selected={workspaceMode === 'chat'}
             className={`workspace-mode-btn ${workspaceMode === 'chat' ? 'active' : ''}`}
             onClick={() => onWorkspaceModeChange && onWorkspaceModeChange('chat')}
-            title="Switch to Conversational Chat view"
+            title="Switch to Chat view"
           >
-            <MessageSquare size={14} />
+            <MessageSquare size={14} className="tab-icon chat-icon" />
             <span>Chat</span>
           </button>
 
@@ -174,18 +175,29 @@ export default function ChatHeader({
             aria-selected={workspaceMode === 'research'}
             className={`workspace-mode-btn ${workspaceMode === 'research' ? 'active' : ''}`}
             onClick={() => onWorkspaceModeChange && onWorkspaceModeChange('research')}
-            title="Switch to Document Research & Synthesis view"
+            title="Switch to Research & Synthesis view"
           >
-            <Sparkles size={14} />
+            <Sparkles size={14} className="tab-icon sparkles-icon" />
             <span>Research & Synthesis</span>
             {activeDocument && <span className="workspace-mode-dot" title={`Active: ${activeDocument.originalName}`} />}
+          </button>
+
+          <button
+            type="button"
+            role="tab"
+            aria-selected={workspaceMode === 'artifacts'}
+            className={`workspace-mode-btn ${workspaceMode === 'artifacts' ? 'active' : ''}`}
+            onClick={() => onWorkspaceModeChange && onWorkspaceModeChange('artifacts')}
+            title="Switch to Artifacts view"
+          >
+            <Layers size={14} className="tab-icon layers-icon" />
+            <span>Artifacts</span>
           </button>
         </div>
       </div>
 
-      {/* Right: Actions & User Avatar (Cleaned up: removed My PDFs button and competing Pro badge) */}
+      {/* Right: Actions, Theme, Settings, User Avatar */}
       <div className="gemini-header-right">
-        {/* Clear Chat Button (if messages exist) */}
         {messageCount > 1 && (
           <button
             type="button"
@@ -198,21 +210,10 @@ export default function ChatHeader({
           </button>
         )}
 
-        {/* Settings Button */}
-        <button
-          type="button"
-          className="gemini-icon-btn"
-          onClick={onOpenSettings}
-          title="Settings & Font Options"
-          aria-label="Settings"
-        >
-          <Sliders size={16} />
-        </button>
-
         {/* Theme Toggle Button */}
         <button
           type="button"
-          className="gemini-icon-btn"
+          className="gemini-icon-btn header-action-btn"
           onClick={onToggleTheme}
           title={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
           aria-label="Toggle theme"
@@ -220,7 +221,18 @@ export default function ChatHeader({
           {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
         </button>
 
-        {/* Clerk Auth Controls */}
+        {/* Settings Button */}
+        <button
+          type="button"
+          className="gemini-icon-btn header-action-btn"
+          onClick={onOpenSettings}
+          title="Settings & Preferences"
+          aria-label="Settings"
+        >
+          <Settings size={17} />
+        </button>
+
+        {/* Clerk Auth Controls / User Avatar */}
         <Show when="signed-out">
           <div className="gemini-header-auth-group">
             <SignInButton mode="modal">
@@ -229,25 +241,15 @@ export default function ChatHeader({
                 className="gemini-sign-in-btn"
                 title="Sign in with Clerk"
               >
-                <LogIn size={15} />
+                <LogIn size={14} />
                 <span>Sign In</span>
               </button>
             </SignInButton>
-            <SignUpButton mode="modal">
-              <button
-                type="button"
-                className="gemini-sign-up-btn"
-                title="Create an account"
-              >
-                <UserPlus size={15} />
-                <span>Sign Up</span>
-              </button>
-            </SignUpButton>
           </div>
         </Show>
 
         <Show when="signed-in">
-          <div className="gemini-header-user-btn-wrap">
+          <div className="header-avatar-container">
             <UserButton
               afterSignOutUrl="/"
               appearance={{
@@ -256,6 +258,7 @@ export default function ChatHeader({
                 }
               }}
             />
+            <span className="avatar-online-badge" />
           </div>
         </Show>
       </div>

@@ -2,14 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   ArrowUp,
   Plus,
-  Mic,
-  MicOff,
-  Globe,
   Zap,
-  BookOpen,
+  ChevronDown,
   UploadCloud,
   FileText,
-  X
+  X,
+  Globe,
+  BookOpen,
+  Check
 } from 'lucide-react';
 
 export default function ChatInput({
@@ -25,10 +25,11 @@ export default function ChatInput({
   placeholder = null
 }) {
   const [input, setInput] = useState('');
-  const [isListening, setIsListening] = useState(false);
   const [isDraggingFile, setIsDraggingFile] = useState(false);
+  const [isReasoningMenuOpen, setIsReasoningMenuOpen] = useState(false);
   const textareaRef = useRef(null);
   const fileInputRef = useRef(null);
+  const reasoningRef = useRef(null);
 
   useEffect(() => {
     if (prefilledText) {
@@ -38,6 +39,17 @@ export default function ChatInput({
       }
     }
   }, [prefilledText]);
+
+  // Close reasoning dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (reasoningRef.current && !reasoningRef.current.contains(e.target)) {
+        setIsReasoningMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Auto-resize textarea height
   useEffect(() => {
@@ -64,7 +76,7 @@ export default function ChatInput({
     }
   };
 
-  // 5. Drag & Drop PDF into query bar to invoke document-grounded mode
+  // Drag & drop PDF
   const handleDragOver = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -90,86 +102,18 @@ export default function ChatInput({
     }
   };
 
-  // Optional voice recognition simulation / API
-  const handleToggleVoice = () => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      alert('Speech recognition is not supported in this browser.');
-      return;
-    }
-
-    if (isListening) {
-      setIsListening(false);
-      return;
-    }
-
-    try {
-      const recognition = new SpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = false;
-      recognition.lang = 'en-US';
-
-      recognition.onstart = () => {
-        setIsListening(true);
-      };
-
-      recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        setInput((prev) => (prev ? `${prev} ${transcript}` : transcript));
-        setIsListening(false);
-      };
-
-      recognition.onerror = () => {
-        setIsListening(false);
-      };
-
-      recognition.onend = () => {
-        setIsListening(false);
-      };
-
-      recognition.start();
-    } catch (e) {
-      console.warn('Voice recognition error:', e);
-      setIsListening(false);
-    }
-  };
-
-  const getModeIcon = () => {
-    switch (currentMode) {
-      case 'research':
-        return <Globe size={13} className="mode-pill-icon globe" />;
-      case 'support':
-        return <BookOpen size={13} className="mode-pill-icon book" />;
-      default:
-        return <Zap size={13} className="mode-pill-icon zap" />;
-    }
-  };
-
-  const getModeName = () => {
-    switch (currentMode) {
-      case 'research':
-        return 'Deep Research';
-      case 'support':
-        return 'Document Grounded';
-      default:
-        return 'Auto';
-    }
-  };
-
-  const cycleMode = () => {
-    if (!onModeChange) return;
-    if (currentMode === 'auto') onModeChange('research');
-    else if (currentMode === 'research') onModeChange('support');
-    else onModeChange('auto');
-  };
-
   const hasText = input.trim().length > 0;
-
   const defaultPlaceholder = activeDocument
     ? `Ask anything about "${activeDocument.originalName}"...`
-    : workspaceMode === 'research'
-    ? 'Ask or synthesize from this document...'
     : "Ask Afzal's AI, search web, or drag & drop a PDF here...";
+
+  const MODES = [
+    { id: 'auto', name: 'Auto reasoning', icon: <Zap size={13} className="text-amber-400" /> },
+    { id: 'research', name: 'Deep Web Research', icon: <Globe size={13} className="text-cyan-400" /> },
+    { id: 'support', name: 'Document Grounded', icon: <BookOpen size={13} className="text-indigo-400" /> }
+  ];
+
+  const currentModeObj = MODES.find((m) => m.id === currentMode) || MODES[0];
 
   return (
     <div
@@ -178,7 +122,7 @@ export default function ChatInput({
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
-      {/* Hidden file input for attachment button */}
+      {/* Hidden file input */}
       <input
         type="file"
         ref={fileInputRef}
@@ -212,9 +156,8 @@ export default function ChatInput({
         </div>
       )}
 
-      {/* 5. Elevated Input Capsule: refined 1px border and slight surface contrast */}
+      {/* Main Elevated Input Capsule */}
       <div className={`gemini-input-capsule ${hasText ? 'has-content' : ''} ${isDraggingFile ? 'drag-active' : ''}`}>
-        {/* Drag overlay state */}
         {isDraggingFile ? (
           <div className="input-drop-overlay">
             <UploadCloud size={24} className="bounce-icon" />
@@ -225,7 +168,7 @@ export default function ChatInput({
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="gemini-input-form" id="chat-form">
-            {/* Multiline auto-expanding textarea */}
+            {/* Auto-expanding textarea */}
             <textarea
               ref={textareaRef}
               id="chat-input"
@@ -240,11 +183,11 @@ export default function ChatInput({
               aria-label="Ask Afzal's AI"
             />
 
-            {/* Bottom Tools & Action Controls */}
+            {/* Bottom Controls Row */}
             <div className="gemini-input-controls-row">
-              {/* 5. Left Controls: File attachment (+) & Mode selector visually separated with a clear divider */}
+              {/* Left Controls: Add (+) + Reasoning Mode Pill + Web Status Pill */}
               <div className="controls-left">
-                {/* File Attachment Button */}
+                {/* File Attachment (+) */}
                 <button
                   type="button"
                   className="gemini-tool-btn upload-doc-btn"
@@ -255,33 +198,48 @@ export default function ChatInput({
                   <Plus size={18} />
                 </button>
 
-                {/* Clear divider separating file attachment from mode selection */}
-                <span className="input-control-divider" aria-hidden="true" />
+                {/* Auto Reasoning Pill */}
+                <div className="reasoning-pill-wrap" ref={reasoningRef}>
+                  <button
+                    type="button"
+                    className="auto-reasoning-pill"
+                    onClick={() => setIsReasoningMenuOpen((prev) => !prev)}
+                    title="Change reasoning mode"
+                  >
+                    <span className="material-symbols-outlined bolt-icon">bolt</span>
+                    <span className="reasoning-pill-text">{currentModeObj.name}</span>
+                    <ChevronDown size={13} className={`chevron-down ${isReasoningMenuOpen ? 'open' : ''}`} />
+                  </button>
 
-                {/* Distinct Mode Selection Pill (Auto / Deep Research / Document Grounded) */}
-                <button
-                  type="button"
-                  className={`gemini-mode-tag-btn ${currentMode}`}
-                  onClick={cycleMode}
-                  title="Mode: Click to cycle Auto, Deep Research, or Document Grounded"
-                >
-                  {getModeIcon()}
-                  <span>{getModeName()}</span>
-                </button>
+                  {isReasoningMenuOpen && (
+                    <div className="reasoning-dropdown-menu">
+                      {MODES.map((m) => (
+                        <button
+                          key={m.id}
+                          type="button"
+                          className={`reasoning-menu-item ${currentMode === m.id ? 'active' : ''}`}
+                          onClick={() => {
+                            if (onModeChange) onModeChange(m.id);
+                            setIsReasoningMenuOpen(false);
+                          }}
+                        >
+                          <span className="menu-item-icon">{m.icon}</span>
+                          <span className="menu-item-text">{m.name}</span>
+                          {currentMode === m.id && <Check size={14} className="menu-check" />}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Language Web: Live Pill */}
+                <div className="web-live-status-pill" title="Web search grounding is active">
+                  <span className="web-live-text">Language Web: Live</span>
+                </div>
               </div>
 
-              {/* Right Controls: Mic & Send Button */}
+              {/* Right Controls: Glowing Cyan Circular Send Button */}
               <div className="controls-right">
-                <button
-                  type="button"
-                  className={`gemini-tool-btn mic-btn ${isListening ? 'listening' : ''}`}
-                  onClick={handleToggleVoice}
-                  title={isListening ? 'Listening... click to stop' : 'Use microphone'}
-                  aria-label="Voice input"
-                >
-                  {isListening ? <MicOff size={18} color="#ef4444" /> : <Mic size={18} />}
-                </button>
-
                 <button
                   id="send-btn"
                   type="submit"
@@ -298,7 +256,7 @@ export default function ChatInput({
         )}
       </div>
 
-      {/* Accuracy Disclaimer */}
+      {/* Centered Disclaimer */}
       <div className="gemini-disclaimer">
         <span>Afzal's AI may display inaccurate info, including about people, so double-check its responses.</span>
       </div>

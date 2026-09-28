@@ -576,9 +576,9 @@ export default function App() {
           onToggleTheme={toggleTheme}
         />
 
-        {/* 2. Dual-Mode Central Workspace */}
+        {/* 2. Central Workspace Switcher (Chat | Research & Synthesis | Artifacts) */}
         {workspaceMode === 'chat' ? (
-          /* Conversational Querying Mode: Single-column chat view with tightened vertical rhythm */
+          /* Conversational Querying Mode: Single-column chat view */
           <div className="gemini-conversational-workspace">
             <main className="gemini-chat-main-area">
               <MessageList
@@ -616,7 +616,7 @@ export default function App() {
               />
             </footer>
           </div>
-        ) : (
+        ) : workspaceMode === 'research' ? (
           /* Document Research Mode: Split-pane layout */
           <div className="gemini-split-workspace">
             {/* Left Pane: Document Viewer with active text-selection tools */}
@@ -696,6 +696,66 @@ export default function App() {
                 />
               </div>
             </div>
+          </div>
+        ) : (
+          /* Artifacts Workspace View */
+          <div className="gemini-artifacts-workspace">
+            <div className="artifacts-container">
+              <div className="artifacts-header">
+                <div className="artifacts-title-wrap">
+                  <h2 className="artifacts-main-title">Artifacts & Synthesized Documents</h2>
+                  <p className="artifacts-subtitle">
+                    Manage generated briefings, multi-chunk document extractions, and reusable components.
+                  </p>
+                </div>
+              </div>
+
+              <div className="artifacts-grid">
+                {documents.length > 0 ? (
+                  documents.map((doc) => (
+                    <div
+                      key={doc._id || doc.id}
+                      className="artifact-card"
+                      onClick={() => handleSelectDocumentForResearch(doc)}
+                    >
+                      <div className="artifact-card-top">
+                        <span className="doc-pdf-badge">PDF</span>
+                        <span className="artifact-date">
+                          {new Date(doc.createdAt || Date.now()).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <h4 className="artifact-title">{doc.originalName}</h4>
+                      <p className="artifact-meta">
+                        {doc.chunkCount || 50} indexed chunks • Multi-tenant namespace
+                      </p>
+                      <div className="artifact-footer">
+                        <span className="artifact-action-text">Open in Research Pane →</span>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="artifacts-empty-state">
+                    <p>No artifacts or indexed documents yet. Upload a PDF or run Deep Research to populate.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <footer className="gemini-footer-dock">
+              <ChatInput
+                onSendMessage={handleSendMessage}
+                isLoading={isLoading}
+                prefilledText={prefilledInput}
+                onOpenDocs={() => setIsDocModalOpen(true)}
+                currentMode={mode}
+                onModeChange={setMode}
+                activeDocument={activeDocument}
+                onClearActiveDocument={() => setActiveDocument(null)}
+                onDropFile={handleDirectPdfUpload}
+                workspaceMode={workspaceMode}
+                placeholder="Ask Afzal's AI to generate an artifact or synthesize documents..."
+              />
+            </footer>
           </div>
         )}
       </div>

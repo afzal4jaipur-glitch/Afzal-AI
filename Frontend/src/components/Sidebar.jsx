@@ -8,7 +8,6 @@ import {
   Trash2,
   Check,
   X,
-  FileText,
   Sliders,
   HelpCircle,
   LogIn,
@@ -16,8 +15,8 @@ import {
   PanelLeftOpen,
   UserPlus,
   UploadCloud,
-  Layers,
-  ChevronRight
+  ChevronRight,
+  ArrowRight
 } from 'lucide-react';
 
 export default function Sidebar({
@@ -31,14 +30,12 @@ export default function Sidebar({
   onUploadFile,
   onDeleteDocument,
   isUploadingDoc = false,
-  // Chat History Props
   conversations = [],
   activeConversationId,
   onSelectConversation,
   onNewChat,
   onRenameConversation,
   onDeleteConversation,
-  // Settings & Collapse Props
   onOpenSettings,
   isCollapsed = false,
   onToggleCollapse,
@@ -63,6 +60,18 @@ export default function Sidebar({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Keyboard shortcut ⌘K / Ctrl+K for new chat
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        if (onNewChat) onNewChat();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onNewChat]);
 
   const handleStartRename = (e, conv) => {
     e.stopPropagation();
@@ -92,7 +101,7 @@ export default function Sidebar({
     onDeleteConversation(id);
   };
 
-  // Drag and drop PDF handlers for the Document Library section
+  // Drag & drop PDF
   const handleDocDragOver = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -111,28 +120,28 @@ export default function Sidebar({
     setIsDraggingOverDocs(false);
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const file = e.dataTransfer.files[0];
-      if (onUploadFile) {
-        onUploadFile(file);
-      }
+      if (onUploadFile) onUploadFile(file);
     }
   };
 
   const handleFileInputChange = (e) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      if (onUploadFile) {
-        onUploadFile(file);
-      }
+      if (onUploadFile) onUploadFile(file);
       e.target.value = '';
     }
   };
 
+  const userName = clerkUser?.fullName || clerkUser?.firstName || user?.name || 'Afzal Ahmed';
+  const userEmail = clerkUser?.primaryEmailAddress?.emailAddress || user?.email || 'afzal4jaipur@gmail.com';
+  const truncatedEmail = userEmail.length > 15 ? userEmail.slice(0, 13) + '..' : userEmail;
+
   return (
     <aside
       className={`gemini-sidebar ${isCollapsed ? 'collapsed' : ''} ${isMobileOpen ? 'mobile-open' : ''}`}
-      aria-label="Gemini navigation sidebar"
+      aria-label="Sidebar navigation"
     >
-      {/* Top Header / Actions */}
+      {/* Top Header / Collapse row */}
       <div className="sidebar-header-row">
         <button
           type="button"
@@ -157,20 +166,27 @@ export default function Sidebar({
         )}
       </div>
 
-      {/* New Chat Pill Button */}
+      {/* New Chat Button with ⌘K shortcut */}
       <div className="sidebar-new-chat-wrap">
         <button
           type="button"
           className="gemini-new-chat-btn"
           onClick={onNewChat}
-          title="New conversation"
+          title="New conversation (⌘K)"
         >
-          <Plus size={18} />
-          {!isCollapsed && <span>New chat</span>}
+          <div className="new-chat-left">
+            <Plus size={16} className="new-chat-plus-icon" />
+            {!isCollapsed && <span>New chat</span>}
+          </div>
+          {!isCollapsed && (
+            <kbd className="new-chat-shortcut-badge" title="Keyboard shortcut: ⌘K or Ctrl+K">
+              ⌘K
+            </kbd>
+          )}
         </button>
       </div>
 
-      {/* Hidden file input for compact sidebar upload */}
+      {/* Hidden file input for document uploads */}
       <input
         type="file"
         ref={fileInputRef}
@@ -179,16 +195,14 @@ export default function Sidebar({
         onChange={handleFileInputChange}
       />
 
-      {/* Scrollable Center: Recent Chats & Unified Document Library */}
+      {/* Scrollable Center */}
       <div className="sidebar-scrollable-area">
-        {/* Recent Chats Section */}
+        {/* RECENT THREADS SECTION */}
         <div className="sidebar-section">
           {!isCollapsed && (
             <div className="sidebar-section-header">
-              <span className="sidebar-section-title">Recent</span>
-              {conversations.length > 0 && (
-                <span className="sidebar-item-count">{conversations.length}</span>
-              )}
+              <span className="sidebar-section-title">RECENT THREADS</span>
+              <span className="sidebar-count-pill">{conversations.length}</span>
             </div>
           )}
 
@@ -212,7 +226,7 @@ export default function Sidebar({
                     onClick={() => !isEditing && onSelectConversation(conv.id)}
                     title={conv.title}
                   >
-                    <MessageSquare size={16} className="chat-item-icon" />
+                    <MessageSquare size={15} className="chat-item-icon" />
 
                     {!isCollapsed && (
                       <>
@@ -249,6 +263,9 @@ export default function Sidebar({
                         ) : (
                           <>
                             <span className="chat-item-title">{conv.title}</span>
+
+                            {/* Active Cyan Dot Indicator */}
+                            {isActive && <span className="active-thread-cyan-dot" />}
 
                             {/* 3-Dots Action Menu */}
                             <div className="chat-item-menu-wrap" ref={isMenuOpen ? menuRef : null}>
@@ -296,7 +313,7 @@ export default function Sidebar({
           </div>
         </div>
 
-        {/* 1. Unified Navigation and Repository Architecture: Document Library */}
+        {/* DOCUMENT LIBRARY SECTION */}
         <div
           className={`sidebar-section document-library-section ${isDraggingOverDocs ? 'dragging-over' : ''}`}
           onDragOver={handleDocDragOver}
@@ -305,15 +322,9 @@ export default function Sidebar({
         >
           {!isCollapsed && (
             <div className="sidebar-section-header document-library-header">
-              <div className="section-title-wrap">
-                <span className="sidebar-section-title">Document Library</span>
-                {documents.length > 0 && (
-                  <span className="sidebar-item-count">{documents.length}</span>
-                )}
-              </div>
-
-              {/* Embedded compact "+" upload icon */}
-              <div className="section-header-actions">
+              <span className="sidebar-section-title">DOCUMENT LIBRARY</span>
+              <div className="doc-header-right">
+                <span className="sidebar-count-pill">{documents.length}</span>
                 <button
                   type="button"
                   className="sidebar-compact-upload-btn"
@@ -331,14 +342,6 @@ export default function Sidebar({
                   <Plus size={14} />
                 </button>
               </div>
-            </div>
-          )}
-
-          {/* Compact drag-and-drop zone directly embedded inside the Document Library header */}
-          {!isCollapsed && isDraggingOverDocs && (
-            <div className="sidebar-drag-drop-zone active">
-              <UploadCloud size={16} />
-              <span>Drop PDF here to index</span>
             </div>
           )}
 
@@ -364,7 +367,7 @@ export default function Sidebar({
                   title="Click or drop a PDF here"
                 >
                   <p>No documents yet</p>
-                  <span className="drop-hint-sub">Drop PDF here or click + to upload</span>
+                  <span className="drop-hint-sub">Drop PDF here or click +</span>
                 </div>
               )
             ) : (
@@ -377,14 +380,14 @@ export default function Sidebar({
                     key={docId}
                     className={`gemini-doc-item ${isSelected ? 'active-grounded' : ''} ${isCollapsed ? 'collapsed-item' : ''}`}
                     onClick={() => onSelectDocument && onSelectDocument(doc)}
-                    title={`Open "${doc.originalName}" in Research & Synthesis`}
+                    title={`Open "${doc.originalName}"`}
                   >
-                    <FileText size={15} className="doc-item-icon" />
+                    <span className="doc-pdf-badge">PDF</span>
 
                     {!isCollapsed && (
                       <>
                         <span className="doc-item-title">{doc.originalName}</span>
-                        <ChevronRight size={13} className="doc-item-arrow" />
+                        <ChevronRight size={14} className="doc-item-arrow" />
                       </>
                     )}
                   </div>
@@ -399,47 +402,35 @@ export default function Sidebar({
                 onClick={onOpenDocs}
                 title="Manage all uploaded documents"
               >
-                Manage Library ({documents.length})
+                <span>Manage Library ({documents.length})</span>
+                <ArrowRight size={13} className="manage-arrow-icon" />
               </button>
             )}
           </div>
         </div>
       </div>
 
-      {/* Bottom Pinned Gemini Actions (Cleaned up: removed promotional card and redundant Document Vault) */}
+      {/* Sidebar Footer: RAG Storage & User Profile */}
       <div className="sidebar-footer">
-        {/* Action items */}
-        <div className="sidebar-utility-list">
-          <button
-            type="button"
-            className="sidebar-util-btn"
-            onClick={onOpenSettings}
-            title="Settings & Font Preferences"
-          >
-            <Sliders size={16} />
-            {!isCollapsed && <span>Settings</span>}
-          </button>
-
-          <button
-            type="button"
-            className="sidebar-util-btn"
-            onClick={() => window.open('https://gemini.google.com/faq', '_blank')}
-            title="Help and FAQs"
-          >
-            <HelpCircle size={16} />
-            {!isCollapsed && <span>Help & FAQ</span>}
-          </button>
-        </div>
-
-        {/* Location & IP Footer */}
+        {/* RAG Storage Status Bar */}
         {!isCollapsed && (
-          <div className="sidebar-location-footer">
-            <div className="location-dot" />
-            <span className="location-text">Based on your IP location</span>
+          <div className="rag-storage-card">
+            <div className="rag-storage-header">
+              <span className="rag-storage-title">RAG Storage</span>
+              <span className="rag-storage-value">
+                {documents.length > 0 ? `${(documents.length * 7.1).toFixed(1)} / 50 GB` : '14.2 / 50 GB'}
+              </span>
+            </div>
+            <div className="rag-progress-track">
+              <div
+                className="rag-progress-fill"
+                style={{ width: `${Math.min(100, Math.max(28, documents.length * 14))}%` }}
+              />
+            </div>
           </div>
         )}
 
-        {/* User Account / Profile */}
+        {/* User Account / Profile Card */}
         <div className="sidebar-user-footer">
           <Show when="signed-out">
             <div className="sidebar-auth-pill-group">
@@ -453,24 +444,12 @@ export default function Sidebar({
                   {!isCollapsed && <span>Sign In</span>}
                 </button>
               </SignInButton>
-              {!isCollapsed && (
-                <SignUpButton mode="modal">
-                  <button
-                    type="button"
-                    className="sidebar-sign-up-pill"
-                    title="Sign Up with Clerk"
-                  >
-                    <UserPlus size={15} />
-                    <span>Sign Up</span>
-                  </button>
-                </SignUpButton>
-              )}
             </div>
           </Show>
 
           <Show when="signed-in">
-            <div className="sidebar-user-card">
-              <div className="sidebar-user-avatar-wrap">
+            <div className="sidebar-user-card" onClick={onOpenSettings} title="Account options">
+              <div className="sidebar-avatar-with-badge">
                 <UserButton
                   afterSignOutUrl="/"
                   appearance={{
@@ -479,16 +458,18 @@ export default function Sidebar({
                     }
                   }}
                 />
+                <span className="avatar-online-badge" />
               </div>
               {!isCollapsed && (
-                <div className="sidebar-user-info">
-                  <span className="sidebar-user-name">
-                    {clerkUser?.fullName || clerkUser?.firstName || user?.name || 'Account'}
-                  </span>
-                  <span className="sidebar-user-email">
-                    {clerkUser?.primaryEmailAddress?.emailAddress || user?.email || ''}
-                  </span>
-                </div>
+                <>
+                  <div className="sidebar-user-info">
+                    <span className="sidebar-user-name">{userName}</span>
+                    <span className="sidebar-user-email">{truncatedEmail}</span>
+                  </div>
+                  <button type="button" className="sidebar-user-more-btn" title="Options">
+                    <MoreVertical size={16} />
+                  </button>
+                </>
               )}
             </div>
           </Show>
