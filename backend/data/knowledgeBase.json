@@ -1,0 +1,51 @@
+[
+  {
+    "id": "doc-01",
+    "title": "Return and Refund Policy",
+    "category": "returns",
+    "content": "We offer a 30-day hassle-free return policy for all unused, unopened items in original condition and packaging. To initiate a return, request a return merchandise authorization (RMA) through our returns portal. Once your return is received and inspected at our warehouse, refunds are automatically issued to your original method of payment within 3 to 5 business days.",
+    "keywords": ["return", "refund", "exchange", "money back", "30 days", "rma"]
+  },
+  {
+    "id": "doc-02",
+    "title": "Shipping and Delivery Timelines",
+    "category": "shipping",
+    "content": "Standard shipping takes between 3 to 5 business days across the continental US and is free on all orders over $50. Expedited 2-day shipping is available for $9.99, and overnight delivery is available for $19.99. Orders placed before 2:00 PM EST ship the same business day.",
+    "keywords": ["shipping", "delivery", "fedex", "ups", "express", "overnight", "cost", "free shipping"]
+  },
+  {
+    "id": "doc-03",
+    "title": "Supported Payment Methods",
+    "category": "billing",
+    "content": "We accept all major credit and debit cards including Visa, MasterCard, American Express, and Discover. We also support digital wallets including Apple Pay, Google Pay, and PayPal. All checkout sessions are protected with 256-bit SSL encryption and PCI-DSS compliance.",
+    "keywords": ["payment", "pay", "credit card", "visa", "mastercard", "paypal", "apple pay", "google pay", "security"]
+  },
+  {
+    "id": "doc-04",
+    "title": "Order Tracking and Status",
+    "category": "orders",
+    "content": "As soon as your package leaves our fulfillment center, we will email you a tracking number and courier tracking link. You can also view live tracking updates by logging into your account or visiting our 'Track Order' tool with your order number and billing zip code.",
+    "keywords": ["track", "tracking", "status", "shipment", "package", "where is my order"]
+  },
+  {
+    "id": "doc-05",
+    "title": "Customer Support Operating Hours",
+    "category": "support",
+    "content": "Our live human customer support agents are available Monday through Friday from 8:00 AM to 8:00 PM EST, and Saturday from 10:00 AM to 4:00 PM EST. Our automated AI Customer Support Agent is online 24/7/365 to provide instantaneous answers to any questions.",
+    "keywords": ["hours", "open", "time", "support", "agent", "phone", "contact", "schedule"]
+  },
+  {
+    "id": "doc-06",
+    "title": "Product Warranty and Replacement",
+    "category": "warranty",
+    "content": "All electronic and manufactured hardware products come with a standard 1-year limited manufacturer warranty covering defects in materials and workmanship. If your product malfunctions under normal use, contact our warranty claims team with proof of purchase to receive a free replacement.",
+    "keywords": ["warranty", "defect", "broken", "replacement", "repair", "1 year", "guarantee"]
+  },
+  {
+    "id": "doc-07",
+    "title": "Account Management and Password Reset",
+    "category": "account",
+    "content": "To reset your account password, click 'Forgot Password' on the login screen and submit your registered email. A secure single-use password reset link valid for 60 minutes will be emailed to you immediately. Two-factor authentication (2FA) can be enabled inside your Account Security settings.",
+    "keywords": ["password", "reset", "login", "account", "email", "2fa", "security"]
+  }
+]
