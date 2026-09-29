@@ -5,11 +5,30 @@ import { dark } from '@clerk/themes';
 import './index.css';
 import App from './App.jsx';
 
-const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+// Read publishable key from environment or fallback to project default test key
+const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || 'pk_test_aHVtYW5lLWdhci0xOTQ1LmNsZXJrLmFjY291bnRzLmRldiQ';
 
 if (!PUBLISHABLE_KEY) {
-  throw new Error('Missing Publishable Key. Please add VITE_CLERK_PUBLISHABLE_KEY to your .env.local file.');
-}
+  createRoot(document.getElementById('root')).render(
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: '100vh',
+      backgroundColor: '#131314',
+      color: '#e3e3e3',
+      fontFamily: 'system-ui, -apple-system, sans-serif',
+      padding: '24px',
+      textAlign: 'center'
+    }}>
+      <h2 style={{ fontSize: '24px', marginBottom: '12px', color: '#ff6b6b' }}>Clerk Publishable Key Missing</h2>
+      <p style={{ maxWidth: '500px', lineHeight: '1.6', color: '#9aa0a6' }}>
+        Please add <code>VITE_CLERK_PUBLISHABLE_KEY</code> to your Netlify Environment Variables (Site configuration &gt; Environment variables) and trigger a redeploy.
+      </p>
+    </div>
+  );
+} else {
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -32,3 +51,4 @@ createRoot(document.getElementById('root')).render(
     </ClerkProvider>
   </StrictMode>
 );
+}

@@ -12,8 +12,7 @@ import {
   Layers,
   MessageSquare
 } from 'lucide-react';
-
-const API_DOCS = 'http://localhost:5000/api/documents';
+import { DOCS_URL as API_DOCS, BACKEND_URL } from '../config/api';
 
 export default function DocumentModal({
   isOpen,
@@ -98,7 +97,7 @@ export default function DocumentModal({
           body: formData
         });
       } catch (fetchErr) {
-        throw new Error('Backend server is not reachable on port 5000. Please ensure the backend is running.');
+        throw new Error(`Backend server is not reachable at ${BACKEND_URL}. Please ensure the backend is running.`);
       }
 
       let data = {};

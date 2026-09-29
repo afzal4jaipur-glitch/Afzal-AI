@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Mail, Lock, User, Eye, EyeOff, Sparkles, LogIn, UserPlus, AlertCircle } from 'lucide-react';
 import GeminiIcon from './GeminiIcon';
-
-const API_BASE = 'http://localhost:5000/api/auth';
+import { AUTH_URL as API_BASE } from '../config/api';
 
 export default function AuthModal({ isOpen, onClose, onSuccess }) {
   const [isLogin, setIsLogin] = useState(true);

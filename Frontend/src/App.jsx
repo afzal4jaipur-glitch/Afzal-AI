@@ -9,10 +9,7 @@ import DocumentViewer from './components/DocumentViewer';
 import DocumentModal from './components/DocumentModal';
 import SettingsModal from './components/SettingsModal';
 import { FONTS } from './constants/fonts';
-
-const API_BASE_URL = 'http://localhost:5000/api/chat';
-const HISTORY_URL = 'http://localhost:5000/api/history';
-const DOCS_URL = 'http://localhost:5000/api/documents';
+import { API_BASE_URL, HISTORY_URL, DOCS_URL, BACKEND_URL } from './config/api';
 
 const CONVERSATIONS_KEY = 'gemini_conversations';
 const ACTIVE_CONV_KEY = 'gemini_active_conv_id';
@@ -468,7 +465,7 @@ export default function App() {
           body: formData
         });
       } catch (fetchErr) {
-        throw new Error('Backend server is not reachable on port 5000. Please ensure the backend server is running.');
+        throw new Error(`Backend server is not reachable at ${BACKEND_URL}. Please ensure the backend server is running.`);
       }
 
       let data = {};

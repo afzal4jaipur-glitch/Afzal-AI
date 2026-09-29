@@ -16,6 +16,7 @@ import {
   Highlighter,
   MessageSquare
 } from 'lucide-react';
+import { DOCS_URL } from '../config/api';
 
 export default function DocumentViewer({
   document: activeDoc,
@@ -63,7 +64,7 @@ export default function DocumentViewer({
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
-      const res = await fetch(`http://localhost:5000/api/documents/${docId}`, { headers });
+      const res = await fetch(`${DOCS_URL}/${docId}`, { headers });
       if (res.ok) {
         const data = await res.json();
         setDocData(data.document || null);
