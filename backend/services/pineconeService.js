@@ -121,10 +121,10 @@ export function getPineconeIndex() {
 }
 
 /**
- * Searches Pinecone vector database for relevant support articles and user-uploaded documents.
+ * Searches Pinecone vector database for user-uploaded documents and/or shared knowledge base.
  * 
- * @param {string} query - Customer question
- * @param {number|object} options - topK number or { topK, userId }
+ * @param {string} query - Question or search phrase
+ * @param {object|number} options - { topK, userId, documentId, includeSharedKB, minScore }
  * @returns {Promise<Array<{ id: string, title: string, category: string, content: string, score: number, source: string }>>}
  */
 export async function searchKnowledgeBase(query, options = {}) {
@@ -133,6 +133,8 @@ export async function searchKnowledgeBase(query, options = {}) {
   let topK = 4;
   let userId = null;
   let documentId = null;
+  let includeSharedKB = false;
+  let minScore = 0.40;
 
   if (typeof options === 'number') {
     topK = options;
@@ -140,12 +142,13 @@ export async function searchKnowledgeBase(query, options = {}) {
     topK = options.topK || 4;
     userId = options.userId || null;
     documentId = options.documentId || null;
+    includeSharedKB = Boolean(options.includeSharedKB);
+    if (typeof options.minScore === 'number') minScore = options.minScore;
   }
 
   // 1. Live Pinecone Vector Search
   if (pineconeIndex && aiClient) {
     try {
-      console.log(`[PineconeService] Generating query vector for: "${query}" (userId: ${userId || 'none'}, documentId: ${documentId || 'none'})`);
       const queryVector = await getQueryEmbedding(query);
 
       if (queryVector && queryVector.length === 768) {
@@ -154,45 +157,52 @@ export async function searchKnowledgeBase(query, options = {}) {
         // 1a. If user is authenticated, query their isolated namespace first
         if (userId) {
           try {
-            console.log(`[PineconeService] Searching user namespace "user_${userId}"...`);
-            const userNs = pineconeIndex.namespace(`user_${userId}`);
-            
-            const queryParams = {
-              vector: queryVector,
-              topK: topK * 2, // Fetch extra chunks to allow for deduplication
-              includeMetadata: true
-            };
+            const rawNs = userId.startsWith('user_') ? userId : `user_${userId}`;
+            const namespacesToTry = [...new Set([rawNs, `user_${userId}`])];
 
-            if (documentId) {
-              queryParams.filter = { documentId: { $eq: documentId.toString() } };
-            }
+            for (const nsName of namespacesToTry) {
+              const userNs = pineconeIndex.namespace(nsName);
+              const queryParams = {
+                vector: queryVector,
+                topK: topK * 2, // Fetch extra chunks to allow for deduplication
+                includeMetadata: true
+              };
 
-            const userRes = await userNs.query(queryParams);
+              if (documentId) {
+                queryParams.filter = { documentId: { $eq: documentId.toString() } };
+              }
 
-            if (userRes.matches && userRes.matches.length > 0) {
-              console.log(`[PineconeService] Found ${userRes.matches.length} user document matches!`);
-              userRes.matches.forEach((m) => {
-                if (m.score >= 0.35) { // Relevant threshold
-                  matches.push({
-                    id: m.id,
-                    title: m.metadata?.title || 'User Document',
-                    category: 'user-document',
-                    content: m.metadata?.content || '',
-                    score: Number((m.score || 0).toFixed(3)),
-                    source: 'user-document',
-                    pageNumber: m.metadata?.pageNumber,
-                    chunkIndex: m.metadata?.chunkIndex
-                  });
-                }
-              });
+              const userRes = await userNs.query(queryParams);
+
+              if (userRes.matches && userRes.matches.length > 0) {
+                userRes.matches.forEach((m) => {
+                  if ((m.score || 0) >= minScore) {
+                    matches.push({
+                      id: m.id,
+                      title: m.metadata?.title || 'User Document',
+                      category: 'user-document',
+                      content: m.metadata?.content || '',
+                      score: Number((m.score || 0).toFixed(3)),
+                      source: 'user-document',
+                      pageNumber: m.metadata?.pageNumber,
+                      chunkIndex: m.metadata?.chunkIndex
+                    });
+                  }
+                });
+              }
+
+              if (matches.length > 0) {
+                console.log(`[PineconeService] Found ${matches.length} relevant user document matches in namespace "${nsName}" (minScore=${minScore})!`);
+                break;
+              }
             }
           } catch (nsErr) {
             console.warn(`[PineconeService] User namespace query notice:`, nsErr.message);
           }
         }
 
-        // 1b. Query standard shared knowledge base (only if no specific user document is grounded)
-        if (!documentId || matches.length === 0) {
+        // 1b. Query shared knowledge base ONLY if explicitly requested
+        if (includeSharedKB && (!documentId || matches.length === 0)) {
           console.log(`[PineconeService] Searching shared Pinecone index "${PINECONE_INDEX_NAME}" (topK=${topK})...`);
           const result = await pineconeIndex.query({
             vector: queryVector,
@@ -201,25 +211,25 @@ export async function searchKnowledgeBase(query, options = {}) {
           });
 
           if (result.matches && result.matches.length > 0) {
-            console.log(`[PineconeService] Found ${result.matches.length} matches from Pinecone KB! Top score: ${result.matches[0].score?.toFixed(3)}`);
             result.matches.forEach((m) => {
-              matches.push({
-                id: m.id,
-                title: m.metadata?.title || m.id,
-                category: m.metadata?.category || 'support',
-                content: m.metadata?.content || '',
-                score: Number((m.score || 0).toFixed(3)),
-                source: 'pinecone-vector-db'
-              });
+              if ((m.score || 0) >= minScore) {
+                matches.push({
+                  id: m.id,
+                  title: m.metadata?.title || m.id,
+                  category: m.metadata?.category || 'support',
+                  content: m.metadata?.content || '',
+                  score: Number((m.score || 0).toFixed(3)),
+                  source: 'pinecone-vector-db'
+                });
+              }
             });
           }
         }
 
         if (matches.length > 0) {
-          // Sort combined by relevance score descending
           matches.sort((a, b) => b.score - a.score);
 
-          // Deduplicate matches so duplicate file uploads or overlapping chunks don't flood the context window
+          // Deduplicate matches
           const seen = new Set();
           const deduped = [];
           for (const m of matches) {
@@ -234,35 +244,51 @@ export async function searchKnowledgeBase(query, options = {}) {
         }
       }
     } catch (err) {
-      console.error('[PineconeService] Pinecone search error, falling back to local dataset:', err.message);
+      console.error('[PineconeService] Pinecone search error:', err.message);
     }
   }
 
-  // 2. Fallback Keyword / Token matching if Pinecone is temporarily unavailable
-  console.log('[PineconeService] Performing fallback search...');
-  const qLower = query.toLowerCase();
-  const scored = fallbackKB.map((doc) => {
-    let score = 0;
-    if (qLower.includes(doc.title.toLowerCase())) score += 0.5;
-    (doc.keywords || []).forEach(kw => {
-      if (qLower.includes(kw.toLowerCase())) score += 0.3;
+  // 2. Fallback Keyword / Token matching ONLY if shared KB was explicitly requested
+  if (includeSharedKB && fallbackKB.length > 0) {
+    console.log('[PineconeService] Performing fallback keyword search for shared KB...');
+    const qLower = query.toLowerCase();
+    const scored = fallbackKB.map((doc) => {
+      let score = 0;
+      if (qLower.includes(doc.title.toLowerCase())) score += 0.5;
+      (doc.keywords || []).forEach(kw => {
+        if (qLower.includes(kw.toLowerCase())) score += 0.3;
+      });
+      return {
+        id: doc.id,
+        title: doc.title,
+        category: doc.category,
+        content: doc.content,
+        score: Number(score.toFixed(3)),
+        source: 'local-kb-fallback'
+      };
     });
-    return {
-      id: doc.id,
-      title: doc.title,
-      category: doc.category,
-      content: doc.content,
-      score: Number(score.toFixed(3)),
-      source: 'local-kb-fallback'
-    };
-  });
 
-  scored.sort((a, b) => b.score - a.score);
-  return scored.slice(0, topK);
+    const relevant = scored.filter(d => d.score >= minScore);
+    relevant.sort((a, b) => b.score - a.score);
+    return relevant.slice(0, topK);
+  }
+
+  return [];
+}
+
+/**
+ * Convenience method to search ONLY a user's uploaded documents.
+ */
+export async function searchUserDocuments(query, options = {}) {
+  return searchKnowledgeBase(query, {
+    ...options,
+    includeSharedKB: false
+  });
 }
 
 export default {
   searchKnowledgeBase,
+  searchUserDocuments,
   getQueryEmbedding,
   getPineconeIndex
 };

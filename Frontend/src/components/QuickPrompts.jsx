@@ -3,21 +3,21 @@ import { Sparkles, ArrowRight } from 'lucide-react';
 
 const PROMPTS_BY_MODE = {
   research: [
+    "What's happening in the world today?",
     "Latest breakthroughs in AI this week",
     "What are the top tech trends in 2026?",
-    "Recent news in renewable energy",
-    "Compare Python vs JavaScript in 2026"
+    "Recent news in renewable energy"
   ],
   support: [
-    "What is the return and refund policy?",
-    "How can I track my shipment?",
-    "What are your customer support hours?",
-    "What payment methods do you accept?"
+    "Summarize the key takeaways from my uploaded PDF",
+    "What are the main conclusions in the document?",
+    "Extract action items and dates from the file",
+    "Explain the methodology used in this document"
   ],
   auto: [
-    "How do I return a purchased item?",
-    "Summarize my uploaded PDF document",
-    "What are the latest AI news today?",
+    "What is photosynthesis?",
+    "What is RAG and how does it work?",
+    "Give me five ideas for a Toastmasters speech",
     "Explain quantum computing simply"
   ]
 };

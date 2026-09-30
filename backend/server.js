@@ -66,9 +66,9 @@ connectDB();
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     status: 'ok',
-    service: 'AI Support, Web Research & PDF RAG Backend',
+    service: 'Afzal AI Assistant - General-Purpose AI, Web Research & PDF RAG Backend',
     features: {
-      llm: 'Gemini 3.6 Flash',
+      llm: 'Gemini Multi-Model (Adaptive Fallback)',
       vectorDb: 'Pinecone Knowledge Base (Multi-Tenant Namespaces)',
       webResearch: 'Tavily AI Search',
       auth: 'Clerk Authentication',
@@ -182,7 +182,7 @@ app.delete('/api/documents/:id', requireAuth, async (req, res) => {
 });
 
 // -------------------------------------------------------------
-// CHAT API (Supports 'auto', 'research', 'support' + Multi-tenant PDF RAG)
+// CHAT API (General-Purpose AI Assistant + PDF RAG + Web Research)
 // -------------------------------------------------------------
 const handleChat = async (req, res) => {
   try {
@@ -192,6 +192,8 @@ const handleChat = async (req, res) => {
     const sessionId = req.body.sessionId || (userId !== 'guest' ? `user_${userId}` : 'default-session');
     const documentId = req.body.documentId || null;
     const documentName = req.body.documentName || null;
+    const modelTier = req.body.modelTier || 'flash';
+    let history = Array.isArray(req.body.history) ? req.body.history : [];
 
     if (!question || typeof question !== 'string') {
       return res.status(400).json({
@@ -201,7 +203,20 @@ const handleChat = async (req, res) => {
 
     console.log(`[POST /api/chat] [User: ${userId}] [Mode: ${mode}] [Doc: ${documentName || 'none'}] [Session: ${sessionId}] User: "${question}"`);
 
-    // 1. Persist User Message to MongoDB
+    // 1. If history was not supplied in the payload, load past conversation turns from MongoDB
+    if (history.length === 0 && isMongoConnected()) {
+      try {
+        const pastDocs = await getSessionHistory({ sessionId, userId, limit: 10 });
+        history = pastDocs.map(m => ({
+          role: m.role,
+          content: m.content
+        }));
+      } catch (histErr) {
+        console.warn('[server.js] Could not load past conversation history:', histErr.message);
+      }
+    }
+
+    // 2. Persist Current User Message to MongoDB
     await saveMessage({
       userId,
       sessionId,
@@ -210,13 +225,21 @@ const handleChat = async (req, res) => {
       mode
     });
 
-    // 2. Call AI Service (User PDF Namespace + Shared KB + Tavily Web Research)
-    const aiResult = await generateAIAnswer(question, { mode, userId, documentId, documentName });
+    // 3. Call AI Service with full conversational context and decision hierarchy
+    const aiResult = await generateAIAnswer(question, {
+      mode,
+      userId,
+      sessionId,
+      documentId,
+      documentName,
+      modelTier,
+      history
+    });
     const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
     console.log(`[POST /api/chat] AI Answer Generated (Source: ${aiResult.source}, Model: ${aiResult.model}, Sources: ${aiResult.sources?.length || 0})`);
 
-    // 3. Persist Assistant Message to MongoDB
+    // 4. Persist Assistant Message to MongoDB
     await saveMessage({
       userId,
       sessionId,

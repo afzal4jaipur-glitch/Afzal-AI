@@ -19,7 +19,7 @@ const FONT_SIZE_STORAGE_KEY = 'gemini_font_size';
 const INITIAL_GREETING = {
   id: 1,
   role: 'assistant',
-  text: "Hello! How can I help you today?",
+  text: "Hello! I'm Afzal AI, your general-purpose AI assistant. How can I help you today?",
   time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
   model: "Afzal's AI",
   source: 'system'
@@ -348,8 +348,22 @@ export default function App() {
         }
       }
 
-      // If document is actively grounded or in research mode, enforce support/grounded mode
-      const effectiveMode = activeDocument || workspaceMode === 'research' ? 'support' : mode;
+      // Determine effective mode based on workspace and active document
+      let effectiveMode = mode;
+      if (workspaceMode === 'research') {
+        effectiveMode = 'research';
+      } else if (activeDocument) {
+        effectiveMode = 'support';
+      }
+
+      // Collect recent conversation turns for multi-turn conversational context
+      const recentHistory = (activeConversation.messages || [])
+        .filter((m) => (m.role === 'user' || m.role === 'assistant') && m.text !== INITIAL_GREETING.text)
+        .slice(-10)
+        .map((m) => ({
+          role: m.role,
+          content: m.text || ''
+        }));
 
       const response = await fetch(API_BASE_URL, {
         method: 'POST',
@@ -358,6 +372,8 @@ export default function App() {
           message: text,
           mode: effectiveMode,
           userId: user?.id || 'guest',
+          sessionId: activeConversationId || 'default-session',
+          history: recentHistory,
           modelTier,
           documentId: activeDocument?._id || activeDocument?.id || undefined,
           documentName: activeDocument?.originalName || undefined
@@ -420,7 +436,7 @@ export default function App() {
             {
               id: Date.now(),
               role: 'assistant',
-              text: "Hello! How can I help you today?",
+              text: "Hello! I'm Afzal AI, your general-purpose AI assistant. How can I help you today?",
               time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
               model: "Afzal's AI"
             }

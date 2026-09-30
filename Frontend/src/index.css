@@ -3,27 +3,44 @@
    ========================================================================== */
 
 /* 1. Gemini Theme Tokens */
-:root {
+:root,
+[data-theme="dark"] {
   --font-body: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
   --font-heading: 'Outfit', 'Inter', sans-serif;
 
-  /* Authentic Google Gemini Dark Palette (Default) */
-  --gemini-bg-base: #131314;
-  --gemini-bg-surface: #1e1f20;
-  --gemini-bg-surface-variant: #282a2c;
-  --gemini-bg-hover: #2d2f31;
-  --gemini-border-subtle: rgba(255, 255, 255, 0.08);
-  --gemini-border-hover: rgba(255, 255, 255, 0.16);
-  --gemini-border-focus: #8ab4f8;
+  /* Sleek Modern Dark Palette (Default) */
+  --gemini-bg-base: #08090d;
+  --gemini-bg-surface: #0b0d13;
+  --gemini-bg-surface-variant: #10141d;
+  --gemini-bg-hover: #151a26;
+  --gemini-bg-active: #181f2c;
+  --gemini-border-subtle: #161b26;
+  --gemini-border-hover: #28374e;
+  --gemini-border-focus: #00d2ff;
+  --gemini-border-card: #1a2233;
+  --gemini-border-active: #253348;
 
-  --gemini-text-primary: #e3e3e3;
-  --gemini-text-secondary: #c4c7c5;
-  --gemini-text-muted: #8e918f;
+  --gemini-text-primary: #f8fafc;
+  --gemini-text-secondary: #8895a7;
+  --gemini-text-muted: #576579;
 
-  --gemini-blue: #8ab4f8;
+  --gemini-blue: #00d2ff;
   --gemini-google-blue: #4285f4;
   --gemini-purple: #9b72cf;
   --gemini-coral: #d96570;
+  --gemini-cyan: #00d2ff;
+  --gemini-teal: #22d3ee;
+  --gemini-green: #10b981;
+  --gemini-red: #ef4444;
+
+  --gemini-pill-bg: #0f131c;
+  --gemini-pill-border: #1d2536;
+  --gemini-card-bg: #0e1118;
+  --gemini-card-border: #1a2233;
+  --gemini-input-bg: #0e121a;
+  --gemini-input-border: #1a2233;
+  --gemini-card-shadow: rgba(0, 0, 0, 0.4);
+  --gemini-card-glow: rgba(0, 210, 255, 0.08);
 
   --gemini-radius-sm: 8px;
   --gemini-radius-md: 14px;
@@ -32,48 +49,65 @@
   --gemini-radius-capsule: 28px;
 
   /* Backward Compatibility Variables for Modals */
-  --bg-primary: #131314;
-  --bg-secondary: #1e1f20;
-  --bg-card: #1e1f20;
-  --bg-surface: #282a2c;
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --text-primary: #e3e3e3;
-  --text-secondary: #c4c7c5;
-  --text-muted: #8e918f;
-  --accent-google-blue: #8ab4f8;
+  --bg-primary: #08090d;
+  --bg-secondary: #0b0d13;
+  --bg-card: #0e1118;
+  --bg-surface: #10141d;
+  --border-subtle: #161b26;
+  --text-primary: #f8fafc;
+  --text-secondary: #8895a7;
+  --text-muted: #576579;
+  --accent-google-blue: #00d2ff;
   --radius-lg: 20px;
   --radius-md: 12px;
   --radius-sm: 8px;
 }
 
 [data-theme="light"] {
-  --gemini-bg-base: #ffffff;
-  --gemini-bg-surface: #f0f4f9;
-  --gemini-bg-surface-variant: #e3e3e3;
-  --gemini-bg-hover: #e8ecf2;
-  --gemini-border-subtle: #dadce0;
-  --gemini-border-hover: #bdc1c6;
-  --gemini-border-focus: #1a73e8;
+  /* Crisp Modern Light Palette */
+  --gemini-bg-base: #f8fafc;
+  --gemini-bg-surface: #ffffff;
+  --gemini-bg-surface-variant: #f1f5f9;
+  --gemini-bg-hover: #e2e8f0;
+  --gemini-bg-active: #e0f2fe;
+  --gemini-border-subtle: #e2e8f0;
+  --gemini-border-hover: #cbd5e1;
+  --gemini-border-focus: #0284c7;
+  --gemini-border-card: #e2e8f0;
+  --gemini-border-active: #38bdf8;
 
-  --gemini-text-primary: #1f1f1f;
-  --gemini-text-secondary: #444746;
-  --gemini-text-muted: #747775;
+  --gemini-text-primary: #0f172a;
+  --gemini-text-secondary: #475569;
+  --gemini-text-muted: #94a3b8;
 
-  --gemini-blue: #1a73e8;
+  --gemini-blue: #0284c7;
   --gemini-google-blue: #1a73e8;
   --gemini-purple: #7c3aed;
   --gemini-coral: #e11d48;
+  --gemini-cyan: #0284c7;
+  --gemini-teal: #0d9488;
+  --gemini-green: #10b981;
+  --gemini-red: #ef4444;
+
+  --gemini-pill-bg: #f1f5f9;
+  --gemini-pill-border: #cbd5e1;
+  --gemini-card-bg: #ffffff;
+  --gemini-card-border: #e2e8f0;
+  --gemini-input-bg: #ffffff;
+  --gemini-input-border: #cbd5e1;
+  --gemini-card-shadow: rgba(0, 0, 0, 0.06);
+  --gemini-card-glow: rgba(2, 132, 199, 0.08);
 
   /* Backward Compatibility Variables for Modals */
-  --bg-primary: #ffffff;
-  --bg-secondary: #f0f4f9;
-  --bg-card: #f0f4f9;
-  --bg-surface: #ffffff;
-  --border-subtle: #dadce0;
-  --text-primary: #1f1f1f;
-  --text-secondary: #444746;
-  --text-muted: #747775;
-  --accent-google-blue: #1a73e8;
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-card: #ffffff;
+  --bg-surface: #f1f5f9;
+  --border-subtle: #e2e8f0;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --accent-google-blue: #0284c7;
 }
 
 /* 2. Global Resets & Layout */
@@ -3969,26 +4003,13 @@ html, body {
    EXACT REDESIGN SPECIFICATION: Afzal's AI Sleek Modern Aesthetic
    ========================================================================== */
 
-:root {
-  --gemini-bg-base: #08090d;
-  --gemini-bg-surface: #0b0d13;
-  --gemini-bg-surface-variant: #10141d;
-  --gemini-bg-hover: #151a26;
-  --gemini-border-subtle: #161b26;
-  --gemini-border-card: #1a2233;
-  --gemini-cyan: #00d2ff;
-  --gemini-teal: #22d3ee;
-  --gemini-green: #10b981;
-  --gemini-red: #ef4444;
-}
-
 /* Top Navigation Bar */
 .gemini-header {
   height: 56px;
   min-height: 56px;
   padding: 0 16px;
-  background: #08090d !important;
-  border-bottom: 1px solid #141822 !important;
+  background: var(--gemini-bg-base) !important;
+  border-bottom: 1px solid var(--gemini-border-subtle) !important;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -4012,7 +4033,7 @@ html, body {
 .gemini-brand-name {
   font-size: 15px;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--gemini-text-primary);
   letter-spacing: -0.01em;
 }
 
@@ -4022,8 +4043,8 @@ html, body {
 }
 
 .gemini-model-pill {
-  background: #0f131c !important;
-  border: 1px solid #1d2536 !important;
+  background: var(--gemini-pill-bg) !important;
+  border: 1px solid var(--gemini-pill-border) !important;
   border-radius: 9999px !important;
   padding: 5px 12px !important;
   display: inline-flex;
@@ -4034,27 +4055,27 @@ html, body {
 }
 
 .gemini-model-pill:hover {
-  background: #141926 !important;
-  border-color: #28364e !important;
+  background: var(--gemini-bg-hover) !important;
+  border-color: var(--gemini-border-hover) !important;
 }
 
 .model-status-dot {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #10b981;
-  box-shadow: 0 0 6px #10b981;
+  background: var(--gemini-green);
+  box-shadow: 0 0 6px var(--gemini-green);
   flex-shrink: 0;
 }
 
 .gemini-model-name {
   font-size: 12.5px;
   font-weight: 500;
-  color: #cbd5e1;
+  color: var(--gemini-text-primary);
 }
 
 .gemini-model-pill .chevron-icon {
-  color: #64748b;
+  color: var(--gemini-text-muted);
   transition: transform 0.2s ease;
 }
 
@@ -4071,8 +4092,8 @@ html, body {
 }
 
 .workspace-mode-selector {
-  background: #0e121a !important;
-  border: 1px solid #1a2233 !important;
+  background: var(--gemini-pill-bg) !important;
+  border: 1px solid var(--gemini-pill-border) !important;
   border-radius: 9999px !important;
   padding: 3px !important;
   display: inline-flex;
@@ -4087,7 +4108,7 @@ html, body {
   padding: 6px 14px !important;
   font-size: 12.5px !important;
   font-weight: 500 !important;
-  color: #8895a7 !important;
+  color: var(--gemini-text-secondary) !important;
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -4097,19 +4118,19 @@ html, body {
 }
 
 .workspace-mode-btn:hover {
-  color: #cbd5e1 !important;
-  background: #131722 !important;
+  color: var(--gemini-text-primary) !important;
+  background: var(--gemini-bg-hover) !important;
 }
 
 .workspace-mode-btn.active {
-  background: #181f2c !important;
-  border: 1px solid #253348 !important;
-  color: #ffffff !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+  background: var(--gemini-bg-surface) !important;
+  border: 1px solid var(--gemini-border-card) !important;
+  color: var(--gemini-text-primary) !important;
+  box-shadow: 0 2px 8px var(--gemini-card-shadow) !important;
 }
 
 .workspace-mode-btn.active .tab-icon {
-  color: #00d2ff !important;
+  color: var(--gemini-cyan) !important;
 }
 
 .tab-icon {
@@ -4128,9 +4149,9 @@ html, body {
   width: 34px !important;
   height: 34px !important;
   border-radius: 50% !important;
-  border: 1px solid #1a2130 !important;
-  background: #0f131c !important;
-  color: #8895a7 !important;
+  border: 1px solid var(--gemini-border-subtle) !important;
+  background: var(--gemini-pill-bg) !important;
+  color: var(--gemini-text-secondary) !important;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -4139,9 +4160,9 @@ html, body {
 }
 
 .header-action-btn:hover {
-  color: #00d2ff !important;
-  border-color: #28374e !important;
-  background: #141926 !important;
+  color: var(--gemini-cyan) !important;
+  border-color: var(--gemini-border-hover) !important;
+  background: var(--gemini-bg-hover) !important;
 }
 
 .header-avatar-container {
@@ -4159,17 +4180,17 @@ html, body {
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  background: #10b981;
-  border: 2px solid #08090d;
-  box-shadow: 0 0 5px #10b981;
+  background: var(--gemini-green);
+  border: 2px solid var(--gemini-bg-base);
+  box-shadow: 0 0 5px var(--gemini-green);
   z-index: 2;
   pointer-events: none;
 }
 
 /* Sidebar Modern Redesign */
 .gemini-sidebar {
-  background: #0b0d13 !important;
-  border-right: 1px solid #151922 !important;
+  background: var(--gemini-bg-surface) !important;
+  border-right: 1px solid var(--gemini-border-subtle) !important;
 }
 
 .sidebar-new-chat-wrap {
@@ -4177,14 +4198,14 @@ html, body {
 }
 
 .gemini-new-chat-btn {
-  background: #10141d !important;
-  border: 1px solid #1c2436 !important;
+  background: var(--gemini-bg-surface-variant) !important;
+  border: 1px solid var(--gemini-border-card) !important;
   border-radius: 9999px !important;
   padding: 9px 14px !important;
   display: flex !important;
   align-items: center;
   justify-content: space-between;
-  color: #ffffff !important;
+  color: var(--gemini-text-primary) !important;
   font-size: 13px !important;
   font-weight: 600 !important;
   cursor: pointer;
@@ -4192,8 +4213,8 @@ html, body {
 }
 
 .gemini-new-chat-btn:hover {
-  background: #151a26 !important;
-  border-color: #29364e !important;
+  background: var(--gemini-bg-hover) !important;
+  border-color: var(--gemini-border-hover) !important;
 }
 
 .new-chat-left {
@@ -4203,17 +4224,17 @@ html, body {
 }
 
 .new-chat-plus-icon {
-  color: #00d2ff;
+  color: var(--gemini-cyan);
 }
 
 .new-chat-shortcut-badge {
-  background: #151b28;
-  border: 1px solid #222c3f;
+  background: var(--gemini-bg-hover);
+  border: 1px solid var(--gemini-border-subtle);
   border-radius: 5px;
   padding: 2px 6px;
   font-size: 10.5px;
   font-weight: 600;
-  color: #64748b;
+  color: var(--gemini-text-muted);
   font-family: inherit;
 }
 
@@ -4228,13 +4249,13 @@ html, body {
   font-size: 10.5px !important;
   font-weight: 700 !important;
   letter-spacing: 0.08em !important;
-  color: #576579 !important;
+  color: var(--gemini-text-muted) !important;
   text-transform: uppercase !important;
 }
 
 .sidebar-count-pill {
-  background: #131722;
-  color: #78879d;
+  background: var(--gemini-bg-surface-variant);
+  color: var(--gemini-text-muted);
   font-size: 10px;
   font-weight: 700;
   padding: 1px 6px;
@@ -4250,7 +4271,7 @@ html, body {
 .sidebar-compact-upload-btn {
   background: transparent;
   border: none;
-  color: #78879d;
+  color: var(--gemini-text-secondary);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -4260,7 +4281,7 @@ html, body {
 }
 
 .sidebar-compact-upload-btn:hover {
-  color: #00d2ff;
+  color: var(--gemini-cyan);
 }
 
 .gemini-chat-item {
@@ -4269,7 +4290,7 @@ html, body {
   gap: 10px;
   padding: 8px 10px !important;
   border-radius: 8px !important;
-  color: #8895a7 !important;
+  color: var(--gemini-text-secondary) !important;
   font-size: 13px !important;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -4278,26 +4299,26 @@ html, body {
 }
 
 .gemini-chat-item:hover {
-  background: #11151f !important;
-  color: #cbd5e1 !important;
+  background: var(--gemini-bg-hover) !important;
+  color: var(--gemini-text-primary) !important;
 }
 
 .gemini-chat-item.active {
-  background: #0f1622 !important;
-  border: 1px solid #162a3a !important;
-  color: #ffffff !important;
+  background: var(--gemini-bg-active) !important;
+  border: 1px solid var(--gemini-border-active, var(--gemini-border-card)) !important;
+  color: var(--gemini-text-primary) !important;
 }
 
 .gemini-chat-item.active .chat-item-icon {
-  color: #00d2ff !important;
+  color: var(--gemini-cyan) !important;
 }
 
 .active-thread-cyan-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #00d2ff;
-  box-shadow: 0 0 8px #00d2ff;
+  background: var(--gemini-cyan);
+  box-shadow: 0 0 8px var(--gemini-cyan);
   margin-left: auto;
   flex-shrink: 0;
 }
@@ -4309,7 +4330,7 @@ html, body {
   gap: 9px;
   padding: 7px 10px !important;
   border-radius: 8px !important;
-  color: #8895a7 !important;
+  color: var(--gemini-text-secondary) !important;
   font-size: 12.5px !important;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -4318,8 +4339,8 @@ html, body {
 }
 
 .gemini-doc-item:hover {
-  background: #11151f !important;
-  color: #cbd5e1 !important;
+  background: var(--gemini-bg-hover) !important;
+  color: var(--gemini-text-primary) !important;
 }
 
 .doc-pdf-badge {
@@ -4340,11 +4361,11 @@ html, body {
   overflow: hidden;
   text-overflow: ellipsis;
   font-size: 12.5px;
-  color: #cbd5e1;
+  color: var(--gemini-text-primary);
 }
 
 .doc-item-arrow {
-  color: #475569;
+  color: var(--gemini-text-muted);
   flex-shrink: 0;
 }
 
@@ -4352,7 +4373,7 @@ html, body {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: #00d2ff !important;
+  color: var(--gemini-cyan) !important;
   font-size: 12px !important;
   font-weight: 600 !important;
   background: transparent !important;
@@ -4377,8 +4398,8 @@ html, body {
 
 /* RAG Storage Status Card */
 .rag-storage-card {
-  background: #0f121a;
-  border: 1px solid #171d29;
+  background: var(--gemini-bg-surface-variant);
+  border: 1px solid var(--gemini-border-subtle);
   border-radius: 9px;
   padding: 10px 12px;
   margin: 6px 12px 10px;
@@ -4394,7 +4415,7 @@ html, body {
 .rag-storage-title {
   font-size: 10.5px;
   font-weight: 700;
-  color: #576579;
+  color: var(--gemini-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -4402,20 +4423,20 @@ html, body {
 .rag-storage-value {
   font-size: 11px;
   font-weight: 600;
-  color: #8895a7;
+  color: var(--gemini-text-secondary);
 }
 
 .rag-progress-track {
   width: 100%;
   height: 3px;
-  background: #171d29;
+  background: var(--gemini-border-subtle);
   border-radius: 9999px;
   overflow: hidden;
 }
 
 .rag-progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #00d2ff, #00f2fe);
+  background: linear-gradient(90deg, var(--gemini-cyan), #00f2fe);
   border-radius: 9999px;
   transition: width 0.3s ease;
 }
@@ -4423,7 +4444,7 @@ html, body {
 /* User Profile Row */
 .sidebar-user-footer {
   padding: 10px 12px !important;
-  border-top: 1px solid #131720 !important;
+  border-top: 1px solid var(--gemini-border-subtle) !important;
 }
 
 .sidebar-user-card {
@@ -4437,7 +4458,7 @@ html, body {
 }
 
 .sidebar-user-card:hover {
-  background: #11151f;
+  background: var(--gemini-bg-hover);
 }
 
 .sidebar-avatar-with-badge {
@@ -4457,7 +4478,7 @@ html, body {
 .sidebar-user-name {
   font-size: 12.5px;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--gemini-text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -4465,7 +4486,7 @@ html, body {
 
 .sidebar-user-email {
   font-size: 11px;
-  color: #64748b;
+  color: var(--gemini-text-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -4474,7 +4495,7 @@ html, body {
 .sidebar-user-more-btn {
   background: transparent;
   border: none;
-  color: #64748b;
+  color: var(--gemini-text-muted);
   cursor: pointer;
   padding: 4px;
   display: flex;
@@ -4483,7 +4504,7 @@ html, body {
 }
 
 .sidebar-user-more-btn:hover {
-  color: #cbd5e1;
+  color: var(--gemini-text-primary);
 }
 
 /* Center Welcome View */
@@ -4500,21 +4521,21 @@ html, body {
 }
 
 .enterprise-top-badge {
-  background: #0f131c;
-  border: 1px solid #1b2333;
+  background: var(--gemini-pill-bg);
+  border: 1px solid var(--gemini-pill-border);
   border-radius: 9999px;
   padding: 4px 10px 4px 6px;
   display: inline-flex;
   align-items: center;
   gap: 8px;
   margin-bottom: 20px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 16px var(--gemini-card-shadow);
 }
 
 .enterprise-title {
   font-size: 12px;
   font-weight: 600;
-  color: #cbd5e1;
+  color: var(--gemini-text-primary);
 }
 
 .enterprise-status-pill {
@@ -4530,21 +4551,21 @@ html, body {
 .welcome-headline {
   font-size: clamp(38px, 5.5vw, 54px);
   font-weight: 700;
-  color: #ffffff;
+  color: var(--gemini-text-primary);
   letter-spacing: -0.03em;
   margin-bottom: 8px;
   line-height: 1.1;
 }
 
 .welcome-name-gradient {
-  background: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%);
+  background: linear-gradient(135deg, var(--gemini-cyan) 0%, #3a7bd5 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .welcome-subhead {
   font-size: 17px;
-  color: #8895a7;
+  color: var(--gemini-text-secondary);
   margin-bottom: 34px;
   font-weight: 400;
 }
@@ -4558,21 +4579,22 @@ html, body {
 }
 
 .welcome-card {
-  background: #0e1118 !important;
-  border: 1px solid #1a2233 !important;
+  background: var(--gemini-card-bg) !important;
+  border: 1px solid var(--gemini-card-border) !important;
   border-radius: 14px !important;
   padding: 20px 22px !important;
   text-align: left;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.2, 0, 0, 1) !important;
   user-select: none;
+  box-shadow: 0 2px 8px var(--gemini-card-shadow) !important;
 }
 
 .welcome-card:hover {
-  background: #111620 !important;
-  border-color: #27354d !important;
+  background: var(--gemini-bg-surface-variant) !important;
+  border-color: var(--gemini-border-hover) !important;
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 210, 255, 0.08) !important;
+  box-shadow: 0 8px 24px var(--gemini-card-glow) !important;
 }
 
 .welcome-card-header {
@@ -4592,38 +4614,38 @@ html, body {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #22d3ee;
-  box-shadow: 0 0 6px #22d3ee;
+  background: var(--gemini-teal);
+  box-shadow: 0 0 6px var(--gemini-teal);
 }
 
 .card-tag-text {
   font-size: 10.5px;
   font-weight: 700;
   letter-spacing: 0.08em;
-  color: #22d3ee;
+  color: var(--gemini-teal);
   text-transform: uppercase;
 }
 
 .card-mat-icon {
   font-size: 20px;
-  color: #55657e;
+  color: var(--gemini-text-muted);
   transition: color 0.2s;
 }
 
 .welcome-card:hover .card-mat-icon {
-  color: #00d2ff;
+  color: var(--gemini-cyan);
 }
 
 .welcome-card-title {
   font-size: 15.5px;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--gemini-text-primary);
   margin-bottom: 6px;
 }
 
 .welcome-card-desc {
   font-size: 12.5px;
-  color: #8895a7;
+  color: var(--gemini-text-secondary);
   line-height: 1.45;
 }
 
@@ -4636,17 +4658,17 @@ html, body {
 }
 
 .gemini-input-capsule {
-  background: #0e121a !important;
-  border: 1px solid #1a2233 !important;
+  background: var(--gemini-input-bg) !important;
+  border: 1px solid var(--gemini-input-border) !important;
   border-radius: 18px !important;
   padding: 14px 18px 12px !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35) !important;
+  box-shadow: 0 4px 20px var(--gemini-card-shadow) !important;
   transition: border-color 0.2s, box-shadow 0.2s !important;
 }
 
 .gemini-input-capsule:focus-within {
-  border-color: #28374e !important;
-  box-shadow: 0 6px 24px rgba(0, 210, 255, 0.09) !important;
+  border-color: var(--gemini-border-focus) !important;
+  box-shadow: 0 6px 24px var(--gemini-card-glow) !important;
 }
 
 .gemini-textarea {
@@ -4654,7 +4676,7 @@ html, body {
   border: none !important;
   outline: none !important;
   width: 100% !important;
-  color: #e2e8f0 !important;
+  color: var(--gemini-text-primary) !important;
   font-size: 14px !important;
   resize: none !important;
   min-height: 24px !important;
@@ -4662,7 +4684,7 @@ html, body {
 }
 
 .gemini-textarea::placeholder {
-  color: #55657e !important;
+  color: var(--gemini-text-muted) !important;
 }
 
 .gemini-input-controls-row {
@@ -4684,7 +4706,7 @@ html, body {
   border-radius: 50%;
   border: none;
   background: transparent;
-  color: #78879d;
+  color: var(--gemini-text-secondary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -4693,8 +4715,8 @@ html, body {
 }
 
 .upload-doc-btn:hover {
-  background: #171d2a;
-  color: #ffffff;
+  background: var(--gemini-bg-hover);
+  color: var(--gemini-text-primary);
 }
 
 .reasoning-pill-wrap {
@@ -4702,23 +4724,23 @@ html, body {
 }
 
 .auto-reasoning-pill {
-  background: #131722;
-  border: 1px solid #1f2738;
+  background: var(--gemini-pill-bg);
+  border: 1px solid var(--gemini-pill-border);
   border-radius: 9999px;
   padding: 5px 12px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
   cursor: pointer;
-  color: #cbd5e1;
+  color: var(--gemini-text-primary);
   font-size: 12px;
   font-weight: 500;
   transition: all 0.2s ease;
 }
 
 .auto-reasoning-pill:hover {
-  background: #181e2b;
-  border-color: #2b384f;
+  background: var(--gemini-bg-hover);
+  border-color: var(--gemini-border-hover);
 }
 
 .bolt-icon {
@@ -4727,7 +4749,7 @@ html, body {
 }
 
 .auto-reasoning-pill .chevron-down {
-  color: #64748b;
+  color: var(--gemini-text-muted);
   transition: transform 0.2s;
 }
 
@@ -4739,12 +4761,12 @@ html, body {
   position: absolute;
   bottom: calc(100% + 8px);
   left: 0;
-  background: #10141e;
-  border: 1px solid #20293b;
+  background: var(--gemini-bg-surface);
+  border: 1px solid var(--gemini-border-card);
   border-radius: 12px;
   padding: 6px;
   min-width: 190px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 10px 30px var(--gemini-card-shadow);
   z-index: 100;
   display: flex;
   flex-direction: column;
@@ -4759,7 +4781,7 @@ html, body {
   border-radius: 8px;
   background: transparent;
   border: none;
-  color: #8e9db3;
+  color: var(--gemini-text-secondary);
   font-size: 12.5px;
   cursor: pointer;
   width: 100%;
@@ -4768,28 +4790,28 @@ html, body {
 }
 
 .reasoning-menu-item:hover {
-  background: #171d2b;
-  color: #ffffff;
+  background: var(--gemini-bg-hover);
+  color: var(--gemini-text-primary);
 }
 
 .reasoning-menu-item.active {
-  background: #151e2e;
-  color: #00d2ff;
+  background: var(--gemini-bg-active);
+  color: var(--gemini-cyan);
 }
 
 .menu-check {
   margin-left: auto;
-  color: #00d2ff;
+  color: var(--gemini-cyan);
 }
 
 .web-live-status-pill {
-  background: rgba(0, 210, 255, 0.07);
+  background: rgba(0, 210, 255, 0.08);
   border: 1px solid rgba(0, 210, 255, 0.28);
   border-radius: 9999px;
   padding: 4px 10px;
   display: inline-flex;
   align-items: center;
-  color: #00d2ff;
+  color: var(--gemini-cyan);
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.02em;
@@ -4800,7 +4822,7 @@ html, body {
   height: 34px !important;
   border-radius: 50% !important;
   border: none !important;
-  background: #00d2ff !important;
+  background: var(--gemini-cyan) !important;
   color: #06111b !important;
   display: flex;
   align-items: center;
@@ -4827,7 +4849,7 @@ html, body {
 .gemini-disclaimer {
   text-align: center;
   font-size: 11px;
-  color: #556275;
+  color: var(--gemini-text-muted);
   margin-top: 8px;
   margin-bottom: 4px;
 }
@@ -4839,7 +4861,7 @@ html, body {
   flex-direction: column;
   overflow: hidden;
   position: relative;
-  background: #08090d;
+  background: var(--gemini-bg-base);
 }
 
 .artifacts-container {
@@ -4854,13 +4876,13 @@ html, body {
 .artifacts-main-title {
   font-size: 24px;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--gemini-text-primary);
   margin-bottom: 6px;
 }
 
 .artifacts-subtitle {
   font-size: 14px;
-  color: #8895a7;
+  color: var(--gemini-text-secondary);
   margin-bottom: 28px;
 }
 
@@ -4871,37 +4893,31 @@ html, body {
 }
 
 .artifact-card {
-  background: #0e1118;
-  border: 1px solid #1a2233;
+  background: var(--gemini-card-bg);
+  border: 1px solid var(--gemini-card-border);
   border-radius: 12px;
   padding: 18px 20px;
   cursor: pointer;
   transition: all 0.2s ease;
+  box-shadow: 0 2px 8px var(--gemini-card-shadow);
 }
 
 .artifact-card:hover {
-  background: #111520;
-  border-color: #27354d;
+  background: var(--gemini-bg-surface-variant);
+  border-color: var(--gemini-border-hover);
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 210, 255, 0.07);
-}
-
-.artifact-card-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
+  box-shadow: 0 6px 20px var(--gemini-card-glow);
 }
 
 .artifact-date {
   font-size: 11px;
-  color: #55657e;
+  color: var(--gemini-text-muted);
 }
 
 .artifact-title {
   font-size: 15px;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--gemini-text-primary);
   margin-bottom: 6px;
   white-space: nowrap;
   overflow: hidden;
@@ -4910,23 +4926,23 @@ html, body {
 
 .artifact-meta {
   font-size: 12px;
-  color: #64748b;
+  color: var(--gemini-text-secondary);
   margin-bottom: 14px;
 }
 
 .artifact-action-text {
   font-size: 12px;
   font-weight: 600;
-  color: #00d2ff;
+  color: var(--gemini-cyan);
 }
 
 .artifacts-empty-state {
   grid-column: 1 / -1;
   text-align: center;
   padding: 48px 24px;
-  background: #0d1017;
-  border: 1px dashed #1c2436;
+  background: var(--gemini-bg-surface-variant);
+  border: 1px dashed var(--gemini-border-card);
   border-radius: 14px;
-  color: #64748b;
+  color: var(--gemini-text-muted);
   font-size: 14px;
 }

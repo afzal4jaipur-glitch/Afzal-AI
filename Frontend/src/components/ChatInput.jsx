@@ -105,7 +105,7 @@ export default function ChatInput({
   const hasText = input.trim().length > 0;
   const defaultPlaceholder = activeDocument
     ? `Ask anything about "${activeDocument.originalName}"...`
-    : "Ask Afzal's AI, search web, or drag & drop a PDF here...";
+    : "Message Afzal AI, search the web, or ask about a PDF...";
 
   const MODES = [
     { id: 'auto', name: 'Auto reasoning', icon: <Zap size={13} className="text-amber-400" /> },
