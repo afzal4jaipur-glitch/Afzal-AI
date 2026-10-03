@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Show, SignInButton, SignUpButton, UserButton } from '@clerk/react';
+import { useUser, useClerk, UserButton } from '@clerk/react';
 import AppLogo from './AppLogo';
 import {
   Menu,
@@ -32,6 +32,8 @@ export default function ChatHeader({
   theme = 'dark',
   onToggleTheme
 }) {
+  const { isSignedIn } = useUser();
+  const { openSignIn, openSignUp } = useClerk();
   const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -232,23 +234,32 @@ export default function ChatHeader({
           <Settings size={17} />
         </button>
 
-        {/* Clerk Auth Controls / User Avatar */}
-        <Show when="signed-out">
+        {/* Auth Controls / User Avatar */}
+        {!isSignedIn ? (
           <div className="gemini-header-auth-group">
-            <SignInButton mode="modal">
-              <button
-                type="button"
-                className="gemini-sign-in-btn"
-                title="Sign in with Clerk"
-              >
-                <LogIn size={14} />
-                <span>Sign In</span>
-              </button>
-            </SignInButton>
-          </div>
-        </Show>
+            <button
+              type="button"
+              className="gemini-sign-in-btn"
+              onClick={() => openSignIn ? openSignIn() : null}
+              title="Sign In to your account"
+              aria-label="Sign in"
+            >
+              <LogIn size={15} />
+              <span>Sign In</span>
+            </button>
 
-        <Show when="signed-in">
+            <button
+              type="button"
+              className="gemini-sign-up-btn"
+              onClick={() => openSignUp ? openSignUp() : null}
+              title="Create a free account"
+              aria-label="Sign up"
+            >
+              <Sparkles size={14} />
+              <span>Sign Up</span>
+            </button>
+          </div>
+        ) : (
           <div className="header-avatar-container">
             <UserButton
               afterSignOutUrl="/"
@@ -260,7 +271,7 @@ export default function ChatHeader({
             />
             <span className="avatar-online-badge" />
           </div>
-        </Show>
+        )}
       </div>
     </header>
   );

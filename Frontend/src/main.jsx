@@ -25,11 +25,27 @@ function Root() {
         baseTheme: dark,
         variables: {
           colorPrimary: '#00d2ff',
-          colorBackground: '#0b0d13',
-          colorInputBackground: '#10141d',
-          colorInputText: '#f8fafc',
-          colorText: '#f8fafc',
-          colorTextSecondary: '#8895a7'
+          colorBackground: '#0b0e17',
+          colorInputBackground: '#131926',
+          colorInputText: '#ffffff',
+          colorText: '#ffffff',
+          colorTextSecondary: '#cbd5e1',
+          colorTextOnPrimaryBackground: '#040d1a'
+        },
+        elements: {
+          modalContent: 'gemini-clerk-modal-content',
+          card: 'gemini-clerk-card',
+          headerTitle: 'gemini-clerk-title',
+          headerSubtitle: 'gemini-clerk-subtitle',
+          socialButtonsBlockButton: 'gemini-clerk-social-btn',
+          socialButtonsBlockButtonText: 'gemini-clerk-social-btn-text',
+          dividerText: 'gemini-clerk-divider-text',
+          dividerLine: 'gemini-clerk-divider-line',
+          formFieldLabel: 'gemini-clerk-label',
+          formFieldInput: 'gemini-clerk-input',
+          formButtonPrimary: 'gemini-clerk-submit-btn',
+          footerActionText: 'gemini-clerk-footer-text',
+          footerActionLink: 'gemini-clerk-footer-link'
         }
       }
     : {
@@ -40,6 +56,12 @@ function Root() {
           colorInputText: '#0f172a',
           colorText: '#0f172a',
           colorTextSecondary: '#475569'
+        },
+        elements: {
+          modalContent: 'gemini-clerk-modal-content',
+          card: 'gemini-clerk-card',
+          headerTitle: 'gemini-clerk-title',
+          headerSubtitle: 'gemini-clerk-subtitle'
         }
       };
 

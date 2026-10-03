@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useClerk } from '@clerk/react';
 
 const RUNNING_PROMPTS = [
   "What are we working on today?",
@@ -8,6 +9,7 @@ const RUNNING_PROMPTS = [
 ];
 
 export default function GeminiWelcome({ user = null }) {
+  const { openSignIn } = useClerk();
   // Device/browser local time-based greeting
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
@@ -67,6 +69,22 @@ export default function GeminiWelcome({ user = null }) {
         <span className="running-text-content">{displayText}</span>
         <span className="running-cursor" aria-hidden="true" />
       </p>
+
+      {!user && (
+        <div className="home-guest-auth-hint">
+          <span className="guest-hint-dot" />
+          <span className="guest-hint-text">
+            Guest session active. You can chat & upload PDFs freely.
+          </span>
+          <button
+            type="button"
+            className="guest-hint-signin-btn"
+            onClick={() => (openSignIn ? openSignIn() : null)}
+          >
+            Sign In / Sign Up
+          </button>
+        </div>
+      )}
     </div>
   );
 }

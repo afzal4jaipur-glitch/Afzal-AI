@@ -3,6 +3,7 @@ import { PDFParse } from 'pdf-parse';
 import { GoogleGenAI } from '@google/genai';
 import Document from '../models/Document.js';
 import { getQueryEmbedding, getBatchEmbeddings, getPineconeIndex } from './pineconeService.js';
+import { isConnected as isMongoConnected } from './dbService.js';
 
 // In-memory document fallback store if MongoDB is connecting/offline
 const memoryDocuments = new Map();
@@ -62,22 +63,31 @@ export async function parseAndChunkPDF(buffer, originalName = 'Document.pdf') {
   let chunks = [];
   let pageCount = 1;
 
+  let parser = null;
   try {
-    const parser = new PDFParse({ data: buffer });
+    parser = new PDFParse({ data: buffer });
     const textResult = await parser.getText();
     
-    if (textResult.pages && textResult.pages.length > 0) {
+    if (textResult && textResult.pages && textResult.pages.length > 0) {
       pageCount = textResult.pages.length;
       textResult.pages.forEach((page) => {
         const pageChunks = chunkText(page.text || '', 1200, 150, page.num);
         pageChunks.forEach((c) => chunks.push(c));
       });
-    } else if (textResult.text) {
+    } else if (textResult && textResult.text) {
       const rawChunks = chunkText(textResult.text, 1200, 150, 1);
       rawChunks.forEach((c) => chunks.push(c));
     }
   } catch (pdfErr) {
     console.warn(`[DocumentService] PDFParse notice for "${originalName}":`, pdfErr.message);
+  } finally {
+    if (parser && typeof parser.destroy === 'function') {
+      try {
+        await parser.destroy();
+      } catch {
+        // parser destroy ignored
+      }
+    }
   }
 
   // If no digital text extracted (scanned/image PDF), attempt Gemini OCR transcription
@@ -86,7 +96,7 @@ export async function parseAndChunkPDF(buffer, originalName = 'Document.pdf') {
       console.log(`[DocumentService] No text stream found in "${originalName}". Attempting Gemini OCR transcription...`);
       const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
       const ocrRes = await ai.models.generateContent({
-        model: 'gemini-3.6-flash',
+        model: 'gemini-3.8-flash',
         contents: [
           {
             role: 'user',
@@ -223,12 +233,16 @@ export async function embedAndUpsertDocument(userId, originalName, buffer, size)
     createdAt: new Date()
   };
 
-  try {
-    const mongoDoc = new Document(newDoc);
-    await mongoDoc.save();
-    console.log(`[DocumentService] Document "${originalName}" saved to MongoDB.`);
-  } catch (dbErr) {
-    console.warn(`[DocumentService] MongoDB save skipped, stored in memory cache:`, dbErr.message);
+  if (isMongoConnected()) {
+    try {
+      const mongoDoc = new Document(newDoc);
+      await mongoDoc.save();
+      console.log(`[DocumentService] Document "${originalName}" saved to MongoDB.`);
+    } catch (dbErr) {
+      console.warn(`[DocumentService] MongoDB save skipped, stored in memory cache:`, dbErr.message);
+    }
+  } else {
+    console.log(`[DocumentService] MongoDB disconnected, document "${originalName}" stored in memory cache.`);
   }
   memoryDocuments.set(docId.toString(), newDoc);
 
@@ -246,19 +260,22 @@ export async function embedAndUpsertDocument(userId, originalName, buffer, size)
  * Retrieves all documents belonging to a user.
  */
 export async function getUserDocuments(userId) {
-  try {
-    const docs = await Document.find({ userId: userId.toString() })
-      .sort({ createdAt: -1 })
-      .select('-chunks')
-      .lean();
-    if (docs && docs.length > 0) return docs;
-  } catch (err) {
-    console.warn('[DocumentService] MongoDB find failed, checking memory cache:', err.message);
+  const uid = userId ? userId.toString() : 'guest';
+  if (isMongoConnected()) {
+    try {
+      const docs = await Document.find({ userId: uid })
+        .sort({ createdAt: -1 })
+        .select('-chunks')
+        .lean();
+      if (docs && docs.length > 0) return docs;
+    } catch (err) {
+      console.warn('[DocumentService] MongoDB find failed, checking memory cache:', err.message);
+    }
   }
 
   // Fallback to memory
   return Array.from(memoryDocuments.values())
-    .filter(d => d.userId === userId.toString())
+    .filter(d => d.userId === uid)
     .map(({ chunks, ...rest }) => rest);
 }
 
@@ -266,15 +283,17 @@ export async function getUserDocuments(userId) {
  * Retrieves a single document by ID, including its chunks.
  */
 export async function getDocumentById(userId, documentId) {
-  const uid = userId ? userId.toString() : '';
+  const uid = userId ? userId.toString() : 'guest';
   if (!uid) return null;
 
   let doc = null;
-  try {
-    doc = await Document.findOne({ _id: documentId, userId: uid }).lean();
-    if (doc) return doc;
-  } catch (err) {
-    console.warn('[DocumentService] MongoDB findOne failed, checking memory cache:', err.message);
+  if (isMongoConnected()) {
+    try {
+      doc = await Document.findOne({ _id: documentId, userId: uid }).lean();
+      if (doc) return doc;
+    } catch (err) {
+      console.warn('[DocumentService] MongoDB findOne failed, checking memory cache:', err.message);
+    }
   }
 
   // Fallback to memory with strict user-level isolation
@@ -289,16 +308,18 @@ export async function getDocumentById(userId, documentId) {
  * Deletes a document, removing vectors from Pinecone namespace and record from MongoDB.
  */
 export async function deleteUserDocument(userId, documentId) {
-  const uid = userId ? userId.toString() : '';
+  const uid = userId ? userId.toString() : 'guest';
   if (!uid) {
     throw new Error('Unauthorized: User identity required to delete documents.');
   }
 
   let doc = null;
-  try {
-    doc = await Document.findOne({ _id: documentId, userId: uid });
-  } catch {
-    doc = memoryDocuments.get(documentId.toString());
+  if (isMongoConnected()) {
+    try {
+      doc = await Document.findOne({ _id: documentId, userId: uid });
+    } catch {
+      doc = memoryDocuments.get(documentId.toString());
+    }
   }
 
   if (!doc) {
@@ -325,9 +346,11 @@ export async function deleteUserDocument(userId, documentId) {
   }
 
   // Delete from MongoDB and memory strictly scoped to user
-  try {
-    await Document.deleteOne({ _id: documentId, userId: uid });
-  } catch {}
+  if (isMongoConnected()) {
+    try {
+      await Document.deleteOne({ _id: documentId, userId: uid });
+    } catch {}
+  }
   memoryDocuments.delete(documentId.toString());
   return { success: true, id: documentId };
 }

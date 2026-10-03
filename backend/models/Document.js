@@ -51,7 +51,10 @@ const DocumentSchema = new mongoose.Schema({
     default: Date.now,
     index: true
   }
+}, {
+  bufferCommands: false
 });
 
 export const Document = mongoose.model('Document', DocumentSchema);
 export default Document;
+

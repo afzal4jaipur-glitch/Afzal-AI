@@ -2946,34 +2946,37 @@ html, body {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Clerk Authentication Styling                                               */
+/* Clerk Authentication & User Header Controls Styling                        */
 /* -------------------------------------------------------------------------- */
 .gemini-header-auth-group {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .gemini-sign-in-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 7px 14px;
-  background: var(--gemini-bg-surface, #1e1f20);
-  color: var(--gemini-text-primary, #e3e3e3);
-  border: 1px solid var(--gemini-border-subtle, rgba(255, 255, 255, 0.12));
+  padding: 6px 14px;
+  background: rgba(0, 210, 255, 0.08);
+  color: #00d2ff;
+  border: 1px solid rgba(0, 210, 255, 0.35);
   border-radius: 20px;
   font-size: 0.82rem;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .gemini-sign-in-btn:hover {
-  background: var(--gemini-bg-hover, rgba(255, 255, 255, 0.08));
-  border-color: var(--gemini-blue, #4285f4);
-  color: #fff;
+  background: rgba(0, 210, 255, 0.18);
+  border-color: #00d2ff;
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(0, 210, 255, 0.3);
   transform: translateY(-1px);
 }
 
@@ -2981,22 +2984,23 @@ html, body {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 7px 14px;
-  background: linear-gradient(135deg, #1a73e8, #4285f4);
-  color: #ffffff;
+  padding: 6px 14px;
+  background: linear-gradient(135deg, #00d2ff, #0284c7);
+  color: #04101e;
   border: none;
   border-radius: 20px;
   font-size: 0.82rem;
-  font-weight: 500;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
-  box-shadow: 0 2px 6px rgba(26, 115, 232, 0.25);
+  box-shadow: 0 2px 8px rgba(0, 210, 255, 0.3);
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .gemini-sign-up-btn:hover {
-  background: linear-gradient(135deg, #185abc, #1a73e8);
-  box-shadow: 0 4px 12px rgba(26, 115, 232, 0.4);
+  background: linear-gradient(135deg, #38bdf8, #00d2ff);
+  box-shadow: 0 4px 14px rgba(0, 210, 255, 0.5);
   transform: translateY(-1px);
 }
 
@@ -3015,25 +3019,52 @@ html, body {
   width: 100%;
 }
 
+.sidebar-sign-in-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: var(--gemini-pill-bg, #0f131c);
+  color: var(--gemini-text-primary, #ffffff);
+  border: 1px solid var(--gemini-border-card, #253348);
+  border-radius: 18px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  flex: 1;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.sidebar-sign-in-pill:hover {
+  background: var(--gemini-bg-hover, #151a26);
+  border-color: var(--gemini-cyan, #00d2ff);
+  color: #00d2ff;
+  transform: translateY(-1px);
+}
+
 .sidebar-sign-up-pill {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
   padding: 8px 12px;
-  background: linear-gradient(135deg, #1a73e8, #4285f4);
-  color: #ffffff;
+  background: linear-gradient(135deg, #00d2ff, #0284c7);
+  color: #04101e;
   border: none;
   border-radius: 18px;
   font-size: 0.8rem;
-  font-weight: 500;
+  font-weight: 700;
   cursor: pointer;
   flex: 1;
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 .sidebar-sign-up-pill:hover {
-  background: linear-gradient(135deg, #185abc, #1a73e8);
+  background: linear-gradient(135deg, #38bdf8, #00d2ff);
+  box-shadow: 0 3px 10px rgba(0, 210, 255, 0.4);
   transform: translateY(-1px);
 }
 
@@ -3041,6 +3072,185 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Home Welcome Guest Badge */
+.home-guest-auth-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px;
+  margin-top: 12px;
+  background: rgba(0, 210, 255, 0.06);
+  border: 1px solid rgba(0, 210, 255, 0.18);
+  border-radius: 20px;
+  font-size: 0.82rem;
+  color: var(--gemini-text-secondary);
+}
+
+.guest-hint-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #00d2ff;
+  box-shadow: 0 0 6px #00d2ff;
+  flex-shrink: 0;
+}
+
+.guest-hint-signin-btn {
+  background: #00d2ff;
+  color: #04101e;
+  border: none;
+  border-radius: 12px;
+  padding: 3px 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.guest-hint-signin-btn:hover {
+  background: #38bdf8;
+  transform: scale(1.03);
+}
+
+/* Document Modal Guest Banner */
+.doc-guest-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  background: rgba(0, 210, 255, 0.08);
+  border: 1px solid rgba(0, 210, 255, 0.22);
+  border-radius: 12px;
+}
+
+.guest-sparkle {
+  color: #00d2ff;
+  flex-shrink: 0;
+}
+
+.doc-guest-banner-text {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 0.84rem;
+  color: var(--gemini-text-primary);
+}
+
+.doc-guest-signin-btn {
+  background: #00d2ff;
+  color: #04101e;
+  border: none;
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.doc-guest-signin-btn:hover {
+  background: #38bdf8;
+}
+
+/* Clerk High-Contrast Dark Mode Overrides */
+.gemini-clerk-card,
+[class*="cl-card"],
+[class*="cl-modalContent"] {
+  background: #0e121a !important;
+  border: 1px solid #222d42 !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8), 0 0 25px rgba(0, 210, 255, 0.12) !important;
+  border-radius: 20px !important;
+  color: #ffffff !important;
+}
+
+.gemini-clerk-title,
+[class*="cl-headerTitle"] {
+  color: #ffffff !important;
+  font-size: 1.3rem !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.01em !important;
+}
+
+.gemini-clerk-subtitle,
+[class*="cl-headerSubtitle"] {
+  color: #cbd5e1 !important;
+  font-size: 0.9rem !important;
+}
+
+.gemini-clerk-social-btn,
+[class*="cl-socialButtonsBlockButton"] {
+  background: #151c2a !important;
+  border: 1px solid #283850 !important;
+  color: #ffffff !important;
+  border-radius: 12px !important;
+  padding: 10px 16px !important;
+  transition: all 0.2s ease !important;
+}
+
+.gemini-clerk-social-btn:hover,
+[class*="cl-socialButtonsBlockButton"]:hover {
+  background: #1c2638 !important;
+  border-color: #00d2ff !important;
+  box-shadow: 0 0 12px rgba(0, 210, 255, 0.25) !important;
+}
+
+.gemini-clerk-social-btn-text,
+[class*="cl-socialButtonsBlockButtonText"] {
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  font-size: 0.92rem !important;
+}
+
+.gemini-clerk-divider-text,
+[class*="cl-dividerRow"] span {
+  color: #94a3b8 !important;
+  font-size: 0.85rem !important;
+}
+
+.gemini-clerk-label,
+[class*="cl-formFieldLabel"] {
+  color: #e2e8f0 !important;
+  font-weight: 600 !important;
+  font-size: 0.88rem !important;
+}
+
+.gemini-clerk-input,
+[class*="cl-formFieldInput"] {
+  background: #121824 !important;
+  border: 1px solid #28374e !important;
+  color: #ffffff !important;
+  border-radius: 10px !important;
+  font-size: 0.92rem !important;
+}
+
+.gemini-clerk-input:focus,
+[class*="cl-formFieldInput"]:focus {
+  border-color: #00d2ff !important;
+  box-shadow: 0 0 0 2px rgba(0, 210, 255, 0.25) !important;
+}
+
+.gemini-clerk-submit-btn,
+[class*="cl-formButtonPrimary"] {
+  background: linear-gradient(135deg, #00d2ff, #0284c7) !important;
+  color: #04101e !important;
+  font-weight: 700 !important;
+  font-size: 0.92rem !important;
+  border-radius: 12px !important;
+}
+
+.gemini-clerk-footer-text,
+[class*="cl-footerActionText"] {
+  color: #cbd5e1 !important;
+}
+
+.gemini-clerk-footer-link,
+[class*="cl-footerActionLink"] {
+  color: #00d2ff !important;
+  font-weight: 700 !important;
 }
 
 /* ==========================================================================
@@ -5264,7 +5474,34 @@ html, body {
 }
 
 /* 5. Mobile & Responsive Layout Enhancements */
+@media (max-width: 900px) {
+  .workspace-mode-selector .workspace-mode-btn span {
+    display: none;
+  }
+  .workspace-mode-selector .workspace-mode-btn {
+    padding: 6px 10px !important;
+  }
+}
+
 @media (max-width: 768px) {
+  .gemini-header {
+    padding: 0 10px !important;
+    gap: 8px !important;
+  }
+
+  .gemini-model-selector-wrap {
+    display: none;
+  }
+
+  .gemini-header-auth-group .gemini-sign-up-btn {
+    display: none;
+  }
+
+  .gemini-header-auth-group .gemini-sign-in-btn {
+    padding: 5px 10px;
+    font-size: 0.78rem;
+  }
+
   .home-screen-hero-container {
     padding: 20px 16px 24px 16px;
   }

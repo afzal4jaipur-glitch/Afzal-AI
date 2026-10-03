@@ -286,17 +286,18 @@ export default function App() {
     }
   }, [isSignedIn, getToken, loadConversationHistory]);
 
-  // Load user's uploaded documents
+  // Load user's uploaded documents (supporting both Clerk user & guest sessions)
   const loadDocuments = useCallback(async () => {
-    if (!isSignedIn) {
-      setDocuments([]);
-      return;
-    }
     try {
-      const activeToken = await getToken();
+      const activeToken = isSignedIn ? await getToken() : null;
+      let guestId = null;
+      if (!isSignedIn) {
+        guestId = localStorage.getItem('guest_user_id') || 'guest';
+      }
       const res = await fetch(DOCS_URL, {
         headers: {
-          ...(activeToken ? { 'Authorization': `Bearer ${activeToken}` } : {})
+          ...(activeToken ? { 'Authorization': `Bearer ${activeToken}` } : {}),
+          ...(guestId ? { 'x-guest-id': guestId } : {})
         }
       });
       if (res.ok) {
@@ -453,11 +454,17 @@ export default function App() {
       const headers = {
         'Content-Type': 'application/json'
       };
+      let effectiveUserId = 'guest';
       if (isSignedIn) {
         const activeToken = await getToken();
         if (activeToken) {
           headers['Authorization'] = `Bearer ${activeToken}`;
         }
+        effectiveUserId = user?.id || 'guest';
+      } else {
+        const guestId = localStorage.getItem('guest_user_id') || 'guest';
+        headers['x-guest-id'] = guestId;
+        effectiveUserId = guestId;
       }
 
       // Determine effective mode based on workspace and active document
@@ -483,7 +490,7 @@ export default function App() {
         body: JSON.stringify({
           message: text,
           mode: effectiveMode,
-          userId: user?.id || 'guest',
+          userId: effectiveUserId,
           sessionId: activeConversationId || 'default-session',
           history: recentHistory,
           modelTier,
@@ -571,18 +578,23 @@ export default function App() {
 
   // 5. Direct PDF drag-and-drop / upload into query bar or sidebar
   const handleDirectPdfUpload = async (file) => {
-    if (!isSignedIn) {
-      handleOpenAuth();
-      return;
-    }
     if (!file.name.toLowerCase().endsWith('.pdf') && file.type !== 'application/pdf') {
-      alert('Only PDF documents are supported.');
+      alert('Only PDF documents are supported. Please select a .pdf file.');
       return;
     }
 
     setIsUploadingDoc(true);
     try {
-      const activeToken = await getToken();
+      const activeToken = isSignedIn ? await getToken() : null;
+      let guestId = null;
+      if (!isSignedIn) {
+        guestId = localStorage.getItem('guest_user_id');
+        if (!guestId) {
+          guestId = 'guest_' + Math.random().toString(36).substring(2, 10);
+          localStorage.setItem('guest_user_id', guestId);
+        }
+      }
+
       const formData = new FormData();
       formData.append('file', file);
 
@@ -591,7 +603,8 @@ export default function App() {
         res = await fetch(`${DOCS_URL}/upload`, {
           method: 'POST',
           headers: {
-            ...(activeToken ? { 'Authorization': `Bearer ${activeToken}` } : {})
+            ...(activeToken ? { 'Authorization': `Bearer ${activeToken}` } : {}),
+            ...(guestId ? { 'x-guest-id': guestId } : {})
           },
           body: formData
         });

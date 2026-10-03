@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Show, SignInButton, SignUpButton, UserButton, useUser } from '@clerk/react';
+import { UserButton, useUser, useClerk } from '@clerk/react';
 import {
   Plus,
   MessageSquare,
@@ -42,7 +42,8 @@ export default function Sidebar({
   isMobileOpen = false,
   onCloseMobile
 }) {
-  const { user: clerkUser } = useUser();
+  const { isSignedIn, user: clerkUser } = useUser();
+  const { openSignIn, openSignUp } = useClerk();
   const [editingId, setEditingId] = useState(null);
   const [editingTitle, setEditingTitle] = useState('');
   const [menuOpenId, setMenuOpenId] = useState(null);
@@ -329,13 +330,7 @@ export default function Sidebar({
                 <button
                   type="button"
                   className="sidebar-compact-upload-btn"
-                  onClick={() => {
-                    if (!user && onOpenAuth) {
-                      onOpenAuth();
-                    } else {
-                      fileInputRef.current?.click();
-                    }
-                  }}
+                  onClick={() => fileInputRef.current?.click()}
                   title="Upload PDF document to library"
                   aria-label="Upload PDF"
                   disabled={isUploadingDoc}
@@ -358,13 +353,7 @@ export default function Sidebar({
               !isCollapsed && (
                 <div
                   className="sidebar-doc-drop-hint"
-                  onClick={() => {
-                    if (!user && onOpenAuth) {
-                      onOpenAuth();
-                    } else {
-                      fileInputRef.current?.click();
-                    }
-                  }}
+                  onClick={() => fileInputRef.current?.click()}
                   title="Click or drop a PDF here"
                 >
                   <p>No uploaded documents</p>
@@ -432,22 +421,33 @@ export default function Sidebar({
 
         {/* User Account / Profile Card */}
         <div className="sidebar-user-footer">
-          <Show when="signed-out">
+          {!isSignedIn ? (
             <div className="sidebar-auth-pill-group">
-              <SignInButton mode="modal">
+              <button
+                type="button"
+                className="sidebar-sign-in-pill"
+                onClick={() => (openSignIn ? openSignIn() : onOpenAuth && onOpenAuth())}
+                title="Sign In"
+                aria-label="Sign In"
+              >
+                <LogIn size={15} />
+                {!isCollapsed && <span>Sign In</span>}
+              </button>
+
+              {!isCollapsed && (
                 <button
                   type="button"
-                  className="sidebar-sign-in-pill"
-                  title="Sign In with Clerk"
+                  className="sidebar-sign-up-pill"
+                  onClick={() => (openSignUp ? openSignUp() : onOpenAuth && onOpenAuth())}
+                  title="Create a free account"
+                  aria-label="Sign Up"
                 >
-                  <LogIn size={15} />
-                  {!isCollapsed && <span>Sign In</span>}
+                  <UserPlus size={14} />
+                  <span>Sign Up</span>
                 </button>
-              </SignInButton>
+              )}
             </div>
-          </Show>
-
-          <Show when="signed-in">
+          ) : (
             <div className="sidebar-user-card" onClick={onOpenSettings} title="Account options">
               <div className="sidebar-avatar-with-badge">
                 <UserButton
@@ -472,7 +472,7 @@ export default function Sidebar({
                 </>
               )}
             </div>
-          </Show>
+          )}
         </div>
       </div>
     </aside>

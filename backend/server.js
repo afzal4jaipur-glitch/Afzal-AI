@@ -107,13 +107,13 @@ app.get('/api/auth/me', requireAuth, async (req, res) => {
 // -------------------------------------------------------------
 // DOCUMENT MANAGEMENT ROUTES (PDF Upload, Ingest, List, Delete)
 // -------------------------------------------------------------
-app.post('/api/documents/upload', requireAuth, upload.single('file'), async (req, res) => {
+app.post('/api/documents/upload', optionalAuth, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No PDF file uploaded. Please attach a file.' });
     }
 
-    const userId = req.user.userId;
+    const userId = req.user?.userId || req.headers['x-guest-id'] || 'guest';
     const originalName = req.file.originalname;
     const buffer = req.file.buffer;
     const size = req.file.size;
@@ -124,7 +124,7 @@ app.post('/api/documents/upload', requireAuth, upload.single('file'), async (req
 
     res.status(201).json({
       success: true,
-      message: `Document "${originalName}" parsed, embedded, and indexed into your personal Pinecone namespace successfully!`,
+      message: `Document "${originalName}" parsed, embedded, and indexed into ${userId === 'guest' ? 'guest' : 'personal'} namespace successfully!`,
       document
     });
   } catch (error) {
@@ -135,9 +135,9 @@ app.post('/api/documents/upload', requireAuth, upload.single('file'), async (req
   }
 });
 
-app.get('/api/documents', requireAuth, async (req, res) => {
+app.get('/api/documents', optionalAuth, async (req, res) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.user?.userId || req.headers['x-guest-id'] || 'guest';
     const documents = await getUserDocuments(userId);
     res.status(200).json({
       success: true,
@@ -150,9 +150,9 @@ app.get('/api/documents', requireAuth, async (req, res) => {
   }
 });
 
-app.get('/api/documents/:id', requireAuth, async (req, res) => {
+app.get('/api/documents/:id', optionalAuth, async (req, res) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.user?.userId || req.headers['x-guest-id'] || 'guest';
     const documentId = req.params.id;
     const document = await getDocumentById(userId, documentId);
     if (!document) {
@@ -168,9 +168,9 @@ app.get('/api/documents/:id', requireAuth, async (req, res) => {
   }
 });
 
-app.delete('/api/documents/:id', requireAuth, async (req, res) => {
+app.delete('/api/documents/:id', optionalAuth, async (req, res) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.user?.userId || req.headers['x-guest-id'] || 'guest';
     const documentId = req.params.id;
 
     await deleteUserDocument(userId, documentId);
@@ -192,8 +192,8 @@ const handleChat = async (req, res) => {
   try {
     const question = req.body.message || req.body.question;
     const mode = req.body.mode || 'auto'; // 'auto' | 'research' | 'support'
-    // Security: Unauthenticated requests cannot claim someone else's userId
-    const userId = req.user ? req.user.userId : 'guest';
+    // Support both authenticated Clerk users and guest users
+    const userId = req.user ? req.user.userId : (req.headers['x-guest-id'] || 'guest');
     const sessionId = req.body.sessionId || (userId !== 'guest' ? `user_${userId}` : 'default-session');
     const documentId = req.body.documentId || null;
     const documentName = req.body.documentName || null;

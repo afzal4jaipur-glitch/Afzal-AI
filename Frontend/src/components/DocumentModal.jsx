@@ -58,19 +58,13 @@ export default function DocumentModal({
   };
 
   const handleFileUpload = async (file) => {
-    if (!isSignedIn) {
-      if (onOpenAuth) onOpenAuth();
-      else openSignIn();
-      return;
-    }
-
     if (!file.name.toLowerCase().endsWith('.pdf') && file.type !== 'application/pdf') {
       setError('Only PDF documents are supported. Please upload a .pdf file.');
       return;
     }
 
-    if (file.size > 15 * 1024 * 1024) {
-      setError('File size exceeds the 15MB limit.');
+    if (file.size > 25 * 1024 * 1024) {
+      setError('File size exceeds the 25MB limit.');
       return;
     }
 
@@ -79,7 +73,16 @@ export default function DocumentModal({
     setUploadStatus('Reading PDF & extracting text...');
 
     try {
-      const activeToken = await getToken();
+      const activeToken = isSignedIn ? await getToken() : null;
+      let guestId = null;
+      if (!isSignedIn) {
+        guestId = localStorage.getItem('guest_user_id');
+        if (!guestId) {
+          guestId = 'guest_' + Math.random().toString(36).substring(2, 10);
+          localStorage.setItem('guest_user_id', guestId);
+        }
+      }
+
       const formData = new FormData();
       formData.append('file', file);
 
@@ -92,7 +95,8 @@ export default function DocumentModal({
         res = await fetch(`${API_DOCS}/upload`, {
           method: 'POST',
           headers: {
-            ...(activeToken ? { 'Authorization': `Bearer ${activeToken}` } : {})
+            ...(activeToken ? { 'Authorization': `Bearer ${activeToken}` } : {}),
+            ...(guestId ? { 'x-guest-id': guestId } : {})
           },
           body: formData
         });
@@ -116,7 +120,7 @@ export default function DocumentModal({
         setIsUploading(false);
         setUploadStatus('');
         if (onDocumentsChange) onDocumentsChange();
-      }, 1000);
+      }, 800);
     } catch (err) {
       setError(err.message);
       setIsUploading(false);
@@ -130,11 +134,13 @@ export default function DocumentModal({
     }
 
     try {
-      const activeToken = await getToken();
+      const activeToken = isSignedIn ? await getToken() : null;
+      const guestId = !isSignedIn ? (localStorage.getItem('guest_user_id') || 'guest') : null;
       const res = await fetch(`${API_DOCS}/${docId}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${activeToken}`
+          ...(activeToken ? { 'Authorization': `Bearer ${activeToken}` } : {}),
+          ...(guestId ? { 'x-guest-id': guestId } : {})
         }
       });
 
@@ -177,29 +183,28 @@ export default function DocumentModal({
           </div>
         </div>
 
-        {!isSignedIn ? (
-          <div className="auth-required-box">
-            <AlertCircle size={22} className="warning-icon" />
-            <div>
-              <h4>Authentication Required</h4>
-              <p>Please sign in with Clerk to upload private documents and isolate your vector knowledge base.</p>
+        {!isSignedIn && (
+          <div className="doc-guest-banner">
+            <Sparkles size={18} className="guest-sparkle" />
+            <div className="doc-guest-banner-text">
+              <span><strong>Guest Mode:</strong> Upload PDFs to query immediately in this session.</span>
+              <button
+                type="button"
+                className="doc-guest-signin-btn"
+                onClick={() => {
+                  onClose();
+                  if (openSignIn) openSignIn();
+                }}
+              >
+                Sign In to save permanently
+              </button>
             </div>
-            <button
-              type="button"
-              className="sign-in-prompt-btn"
-              onClick={() => {
-                onClose();
-                openSignIn();
-              }}
-            >
-              Sign In with Clerk
-            </button>
           </div>
-        ) : (
-          <>
-            {/* Drag & Drop Uploader */}
-            <div
-              className={`dropzone ${isDragging ? 'dragging' : ''} ${isUploading ? 'uploading' : ''}`}
+        )}
+
+        {/* Drag & Drop Uploader */}
+        <div
+          className={`dropzone ${isDragging ? 'dragging' : ''} ${isUploading ? 'uploading' : ''}`}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
@@ -306,8 +311,6 @@ export default function DocumentModal({
                 </div>
               )}
             </div>
-          </>
-        )}
       </div>
     </div>
   );
