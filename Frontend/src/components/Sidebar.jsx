@@ -210,7 +210,8 @@ export default function Sidebar({
             {conversations.length === 0 ? (
               !isCollapsed && (
                 <div className="sidebar-empty-note">
-                  <p>No recent chats</p>
+                  <p>No previous conversations</p>
+                  <span>Start a conversation to build your personal history.</span>
                 </div>
               )
             ) : (
@@ -366,8 +367,8 @@ export default function Sidebar({
                   }}
                   title="Click or drop a PDF here"
                 >
-                  <p>No documents yet</p>
-                  <span className="drop-hint-sub">Drop PDF here or click +</span>
+                  <p>No uploaded documents</p>
+                  <span className="drop-hint-sub">Upload a PDF to ground your conversations with personal files.</span>
                 </div>
               )
             ) : (
@@ -380,13 +381,18 @@ export default function Sidebar({
                     key={docId}
                     className={`gemini-doc-item ${isSelected ? 'active-grounded' : ''} ${isCollapsed ? 'collapsed-item' : ''}`}
                     onClick={() => onSelectDocument && onSelectDocument(doc)}
-                    title={`Open "${doc.originalName}"`}
+                    title={`"${doc.originalName}" • Available to AI`}
                   >
                     <span className="doc-pdf-badge">PDF</span>
 
                     {!isCollapsed && (
                       <>
-                        <span className="doc-item-title">{doc.originalName}</span>
+                        <div className="doc-item-info">
+                          <span className="doc-item-title">{doc.originalName}</span>
+                          <span className="doc-item-status">
+                            <span className="doc-status-dot" /> Available to AI
+                          </span>
+                        </div>
                         <ChevronRight size={14} className="doc-item-arrow" />
                       </>
                     )}
@@ -410,23 +416,17 @@ export default function Sidebar({
         </div>
       </div>
 
-      {/* Sidebar Footer: RAG Storage & User Profile */}
+      {/* Sidebar Footer: Personal Workspace Status & User Profile */}
       <div className="sidebar-footer">
-        {/* RAG Storage Status Bar */}
         {!isCollapsed && (
-          <div className="rag-storage-card">
-            <div className="rag-storage-header">
-              <span className="rag-storage-title">RAG Storage</span>
-              <span className="rag-storage-value">
-                {documents.length > 0 ? `${(documents.length * 7.1).toFixed(1)} / 50 GB` : '14.2 / 50 GB'}
-              </span>
+          <div className="workspace-status-card">
+            <div className="workspace-status-header">
+              <span className="workspace-status-title">Personal AI Workspace</span>
+              <span className="workspace-status-badge">Private</span>
             </div>
-            <div className="rag-progress-track">
-              <div
-                className="rag-progress-fill"
-                style={{ width: `${Math.min(100, Math.max(28, documents.length * 14))}%` }}
-              />
-            </div>
+            <p className="workspace-status-meta">
+              {documents.length} document{documents.length === 1 ? '' : 's'} indexed & available to AI
+            </p>
           </div>
         )}
 

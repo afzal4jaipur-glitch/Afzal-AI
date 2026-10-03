@@ -51,4 +51,35 @@ const MessageSchema = new mongoose.Schema({
 });
 
 export const Message = mongoose.model('Message', MessageSchema);
+
+const ConversationSchema = new mongoose.Schema({
+  sessionId: {
+    type: String,
+    required: true,
+    index: true
+  },
+  userId: {
+    type: String,
+    required: true,
+    index: true
+  },
+  title: {
+    type: String,
+    default: 'New chat'
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now,
+    index: true
+  }
+});
+
+// Compound unique index ensuring sessionId uniqueness per user
+ConversationSchema.index({ userId: 1, sessionId: 1 }, { unique: true });
+
+export const Conversation = mongoose.model('Conversation', ConversationSchema);
 export default Message;

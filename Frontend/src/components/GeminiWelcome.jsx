@@ -1,121 +1,72 @@
-import React from 'react';
-import AppLogo from './AppLogo';
-import { PenLine, Compass, BookOpen, Code2 } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
 
-export default function GeminiWelcome({
-  user,
-  onSelectPrompt,
-  onSwitchToResearch,
-  documents = []
-}) {
-  const firstName = user?.name ? user.name.split(' ')[0] : 'Afzal';
+const RUNNING_PROMPTS = [
+  "What are we working on today?",
+  "How can I help you today?",
+  "Ask a question, research a topic, or analyze a PDF.",
+  "Help me draft, summarize, or explore ideas."
+];
 
-  const cards = [
-    {
-      id: 'writing',
-      tag: 'WRITING',
-      title: 'Help me write',
-      desc: 'Draft a thoughtful email, proposal, or executive brief with clarity and conciseness.',
-      prompt: 'Help me draft a thoughtful email, proposal, or executive brief with clarity and conciseness.',
-      iconName: 'edit_note',
-      lucideIcon: <PenLine size={18} />,
-      actionType: 'prompt'
-    },
-    {
-      id: 'research',
-      tag: 'RESEARCH',
-      title: 'Explore & Research',
-      desc: 'Ground queries with live web search, recent market data, and verified references.',
-      prompt: 'Ground queries with live web search, recent market data, and verified references.',
-      iconName: 'travel_explore',
-      lucideIcon: <Compass size={18} />,
-      actionType: 'prompt'
-    },
-    {
-      id: 'analysis',
-      tag: 'RESEARCH & SYNTHESIS',
-      title: 'Analyze Document',
-      desc: 'Inspect parsed excerpts, run multi-chunk RAG, and synthesize cross-document findings.',
-      prompt: documents.length > 0
-        ? `Analyze the document "${documents[0].originalName}" and synthesize the key findings.`
-        : 'Analyze my uploaded PDF and synthesize the key findings.',
-      iconName: 'library_books',
-      lucideIcon: <BookOpen size={18} />,
-      actionType: 'research'
-    },
-    {
-      id: 'engineering',
-      tag: 'ENGINEERING',
-      title: 'Code & Debug',
-      desc: 'Explain complex architectures, generate unit-tested components, or optimize routines.',
-      prompt: 'Explain complex architectures, generate unit-tested components, or optimize routines.',
-      iconName: 'code',
-      lucideIcon: <Code2 size={18} />,
-      actionType: 'prompt'
+export default function GeminiWelcome({ user = null }) {
+  // Device/browser local time-based greeting
+  const greeting = useMemo(() => {
+    const hour = new Date().getHours();
+    let timeGreeting = 'Good morning';
+    if (hour >= 12 && hour < 17) {
+      timeGreeting = 'Good afternoon';
+    } else if (hour >= 17 || hour < 5) {
+      timeGreeting = 'Good evening';
     }
-  ];
 
-  const handleCardClick = (card) => {
-    if (card.actionType === 'research' && onSwitchToResearch) {
-      if (documents.length > 0) {
-        onSwitchToResearch(documents[0]);
-      } else {
-        onSwitchToResearch(null);
-      }
-      return;
+    const firstName = user?.firstName || (user?.name ? user.name.trim().split(/\s+/)[0] : '');
+    return firstName ? `${timeGreeting}, ${firstName}` : timeGreeting;
+  }, [user]);
+
+  // Running text animation for "What are we working on today?" and similar prompts
+  const [displayText, setDisplayText] = useState(RUNNING_PROMPTS[0]);
+  const [phraseIndex, setPhraseIndex] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [charIndex, setCharIndex] = useState(RUNNING_PROMPTS[0].length);
+
+  useEffect(() => {
+    const currentPhrase = RUNNING_PROMPTS[phraseIndex];
+    let timer;
+
+    if (!isDeleting && charIndex < currentPhrase.length) {
+      // Typing forward
+      timer = setTimeout(() => {
+        setCharIndex((prev) => prev + 1);
+        setDisplayText(currentPhrase.substring(0, charIndex + 1));
+      }, 55);
+    } else if (!isDeleting && charIndex === currentPhrase.length) {
+      // Pause at end of phrase
+      timer = setTimeout(() => {
+        setIsDeleting(true);
+      }, 3500);
+    } else if (isDeleting && charIndex > 0) {
+      // Deleting backwards
+      timer = setTimeout(() => {
+        setCharIndex((prev) => prev - 1);
+        setDisplayText(currentPhrase.substring(0, charIndex - 1));
+      }, 30);
+    } else if (isDeleting && charIndex === 0) {
+      // Move to next phrase
+      setIsDeleting(false);
+      setPhraseIndex((prev) => (prev + 1) % RUNNING_PROMPTS.length);
     }
-    if (onSelectPrompt) {
-      onSelectPrompt(card.prompt);
-    }
-  };
+
+    return () => clearTimeout(timer);
+  }, [charIndex, isDeleting, phraseIndex]);
 
   return (
-    <div className="gemini-welcome-container">
-      {/* Top Enterprise Badge */}
-      <div className="enterprise-top-badge">
-        <AppLogo size={18} className="enterprise-logo-icon" />
-        <span className="enterprise-title">Afzal's AI Enterprise v2.5</span>
-        <span className="enterprise-status-pill">Active</span>
-      </div>
-
-      {/* Main Greeting Headline */}
-      <div className="welcome-headline-wrap">
-        <h1 className="welcome-headline">
-          Hello, <span className="welcome-name-gradient">{firstName}</span>
-        </h1>
-        <p className="welcome-subhead">What shall we investigate today?</p>
-      </div>
-
-      {/* 2x2 Feature Suggestion Cards Grid */}
-      <div className="welcome-cards-grid">
-        {cards.map((card) => (
-          <div
-            key={card.id}
-            className="welcome-card"
-            onClick={() => handleCardClick(card)}
-            role="button"
-            tabIndex={0}
-            title={card.title}
-          >
-            {/* Card Header: Teal Dot + Uppercase Tag on Left, Icon on Right */}
-            <div className="welcome-card-header">
-              <div className="welcome-card-tag-wrap">
-                <span className="card-teal-dot" />
-                <span className="card-tag-text">{card.tag}</span>
-              </div>
-              <div className="welcome-card-icon-wrap" aria-hidden="true">
-                <span className="material-symbols-outlined card-mat-icon">{card.iconName}</span>
-              </div>
-            </div>
-
-            {/* Card Body */}
-            <div className="welcome-card-body">
-              <h3 className="welcome-card-title">{card.title}</h3>
-              <p className="welcome-card-desc">{card.desc}</p>
-            </div>
-          </div>
-        ))}
-      </div>
+    <div className="home-welcome-header" id="home-welcome">
+      <h1 className="home-greeting-title">
+        {greeting}
+      </h1>
+      <p className="home-running-subtitle" aria-live="polite">
+        <span className="running-text-content">{displayText}</span>
+        <span className="running-cursor" aria-hidden="true" />
+      </p>
     </div>
   );
 }

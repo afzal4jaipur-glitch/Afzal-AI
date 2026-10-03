@@ -17,6 +17,10 @@ import {
   saveMessage,
   getSessionHistory,
   clearSessionHistory,
+  getUserConversations,
+  updateConversationTitle,
+  deleteUserConversation,
+  clearAllUserConversations,
   isConnected as isMongoConnected
 } from './services/dbService.js';
 
@@ -188,7 +192,8 @@ const handleChat = async (req, res) => {
   try {
     const question = req.body.message || req.body.question;
     const mode = req.body.mode || 'auto'; // 'auto' | 'research' | 'support'
-    const userId = req.user ? req.user.userId : (req.body.userId || 'guest');
+    // Security: Unauthenticated requests cannot claim someone else's userId
+    const userId = req.user ? req.user.userId : 'guest';
     const sessionId = req.body.sessionId || (userId !== 'guest' ? `user_${userId}` : 'default-session');
     const documentId = req.body.documentId || null;
     const documentName = req.body.documentName || null;
@@ -279,7 +284,7 @@ app.post('/chat', optionalAuth, handleChat);
 app.post('/api/research', optionalAuth, async (req, res) => {
   try {
     const { topic, options = {} } = req.body;
-    const userId = req.user ? req.user.userId : (req.body.userId || 'guest');
+    const userId = req.user ? req.user.userId : 'guest';
     const sessionId = req.body.sessionId || (userId !== 'guest' ? `user_${userId}` : 'default-session');
 
     if (!topic || typeof topic !== 'string') {
@@ -329,12 +334,69 @@ app.post('/api/research', optionalAuth, async (req, res) => {
 });
 
 // -------------------------------------------------------------
+// MULTI-USER CONVERSATION ENDPOINTS
+// -------------------------------------------------------------
+app.get('/api/conversations', optionalAuth, async (req, res) => {
+  try {
+    const userId = req.user ? req.user.userId : 'guest';
+    const conversations = await getUserConversations(userId);
+    res.status(200).json({
+      success: true,
+      count: conversations.length,
+      conversations
+    });
+  } catch (error) {
+    console.error('Error fetching conversations:', error);
+    res.status(500).json({ error: 'Failed to retrieve conversations.' });
+  }
+});
+
+app.patch('/api/conversations/:sessionId', optionalAuth, async (req, res) => {
+  try {
+    const userId = req.user ? req.user.userId : 'guest';
+    const { sessionId } = req.params;
+    const { title } = req.body;
+    const result = await updateConversationTitle(userId, sessionId, title);
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('Error updating conversation title:', error);
+    res.status(500).json({ error: 'Failed to update conversation title.' });
+  }
+});
+
+app.delete('/api/conversations/:sessionId', optionalAuth, async (req, res) => {
+  try {
+    const userId = req.user ? req.user.userId : 'guest';
+    const { sessionId } = req.params;
+    const result = await deleteUserConversation(userId, sessionId);
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('Error deleting conversation:', error);
+    res.status(500).json({ error: 'Failed to delete conversation.' });
+  }
+});
+
+app.delete('/api/conversations', optionalAuth, async (req, res) => {
+  try {
+    const userId = req.user ? req.user.userId : 'guest';
+    await clearAllUserConversations(userId);
+    res.status(200).json({
+      success: true,
+      message: 'All conversations and messages cleared for user.'
+    });
+  } catch (error) {
+    console.error('Error clearing conversations:', error);
+    res.status(500).json({ error: 'Failed to clear conversations.' });
+  }
+});
+
+// -------------------------------------------------------------
 // CHAT HISTORY ENDPOINTS (MongoDB Atlas)
 // -------------------------------------------------------------
 app.get('/api/history', optionalAuth, async (req, res) => {
   try {
-    const userId = req.user ? req.user.userId : (req.query.userId || null);
-    const sessionId = req.query.sessionId || (userId ? `user_${userId}` : 'default-session');
+    const userId = req.user ? req.user.userId : 'guest';
+    const sessionId = req.query.sessionId || (userId !== 'guest' ? `user_${userId}` : 'default-session');
     const limit = parseInt(req.query.limit, 10) || 50;
 
     const history = await getSessionHistory({ sessionId, userId, limit });
@@ -365,8 +427,8 @@ app.get('/api/history', optionalAuth, async (req, res) => {
 
 app.delete('/api/history', optionalAuth, async (req, res) => {
   try {
-    const userId = req.user ? req.user.userId : (req.query.userId || null);
-    const sessionId = req.query.sessionId || (userId ? `user_${userId}` : 'default-session');
+    const userId = req.user ? req.user.userId : 'guest';
+    const sessionId = req.query.sessionId || (userId !== 'guest' ? `user_${userId}` : 'default-session');
 
     await clearSessionHistory({ sessionId, userId });
 

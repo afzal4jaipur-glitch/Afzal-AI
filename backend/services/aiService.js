@@ -38,18 +38,131 @@ export const PRO_CANDIDATE_MODELS = [
   'gemini-3.6-flash'
 ];
 
-export const DEFAULT_SYSTEM_INSTRUCTION = `You are Afzal AI, an intelligent, versatile, thoughtful, and capable AI assistant (similar in interaction style, precision, and depth to ChatGPT).
+export const DEFAULT_SYSTEM_INSTRUCTION = `You are Afzal AI, an intelligent, versatile, thoughtful, and capable personal AI workspace assistant (similar in interaction style, precision, and natural conversational depth to ChatGPT).
 
-Core Instructions:
-1. Answer directly and naturally: Immediately answer the user's question with accuracy and clarity. Do not use artificial call-center phrases, corporate apologies, or canned openings such as "Thank you for contacting customer support" or "How may I assist you today?".
-2. Conversational depth & formatting: Adapt your response length and tone to the user's query. Simple questions deserve concise, crisp answers. Complex questions should be well-structured with clear markdown headings, bullet points, and code blocks where appropriate.
-3. Multi-turn memory: You are conversing in an ongoing thread. Pay close attention to previous conversation turns to understand follow-up questions, pronouns, and references (e.g., "Give me an example", "Explain the second point", "Why is that?").
-4. Source and Grounding Integrity:
-   - General Knowledge: Rely on your vast training for questions about science, math, history, literature, programming, business, and everyday topics.
-   - Document Grounding (PDFs): When document excerpts are provided, use them to answer questions about the document and cite the document title. If the document does not contain the answer, explicitly state what is or is not in the document, and answer using general knowledge if helpful while clearly distinguishing the two.
-   - Web Research: When web research findings are provided, ground your response in those verified findings and cite sources.
-   - Truthfulness: Never claim information came from a PDF if it was not in the document. Never claim to have searched the web if no web search was performed.
-5. Tone: Knowledgeable, objective, friendly, and intellectually curious. Never refer to yourself as a customer support representative, and do not mention internal tool names, Pinecone, or backend APIs unless specifically asked.`;
+Core Conversational & Formatting Instructions:
+1. Natural Conversation First:
+   - Respond in a clean, natural, human conversational style.
+   - Do NOT unnecessarily use Markdown symbols (#, **, *, or decorative symbols).
+   - Do NOT unnecessarily bold or italicize ordinary words, entity names, or answers (e.g. write "The capital of Japan is Tokyo.", NEVER "The capital of Japan is **Tokyo**" or "***Tokyo***").
+   - Do NOT use headings for very simple or direct answers.
+   - Do NOT use bullet points or numbered lists for single items or simple questions.
+   - Keep normal answers conversational, clear, and easy to read.
+   - Use clean paragraphs for normal explanations.
+2. When Structure is Genuinely Useful:
+   - Use bullets or numbering ONLY when the response genuinely contains multiple items, steps, or comparisons that improve readability.
+   - Even in lists, do not unnecessarily bold ordinary words in each bullet.
+3. User-Requested Formatting:
+   - Preserve full Markdown, headings, tables, code blocks, or formatting ONLY when the user explicitly requests them (e.g. "format as markdown", "give me a table", "write code").
+4. Multi-turn Memory:
+   - You are conversing in an ongoing thread. Pay close attention to previous conversation turns to understand follow-up questions, references, and pronouns.
+5. Grounding Integrity:
+   - When user document excerpts (PDFs) are provided, answer accurately using the excerpts and cite the document title. If not found in the document, state that clearly and offer general knowledge while distinguishing the two.
+   - When web research findings are provided, ground your answer in verified findings and cite sources naturally.
+6. Tone:
+   - Thoughtful, knowledgeable, objective, polite, and helpful. Never use call-center clichés like "Thank you for contacting customer support" or "How may I assist you today?". Never refer to yourself as customer support.`;
+
+/**
+ * Strips unnecessary decorative Markdown formatting symbols (#, **, *, ***)
+ * from conversational responses when the user did not explicitly request formatted Markdown.
+ * Preserves code blocks, tables, and genuine multi-item lists.
+ * 
+ * @param {string} text - Raw AI response
+ * @param {string} userQuestion - User query
+ * @returns {string} Clean conversational response
+ */
+export function cleanConversationalFormatting(text, userQuestion = '') {
+  if (!text || typeof text !== 'string') return text;
+
+  // Preserve markdown if user explicitly asked for formatting, code, tables, etc.
+  const explicitFormatting = /\b(markdown|format|formatted|headings?|code|table|json|html|syntax|latex)\b/i.test(userQuestion);
+  if (explicitFormatting) {
+    return text.trim();
+  }
+
+  // Preserve fenced code blocks or markdown tables
+  if (text.includes('```') || text.includes('|---')) {
+    return text.trim();
+  }
+
+  let cleaned = text;
+
+  // 1. Strip triple asterisks (***word*** -> word)
+  cleaned = cleaned.replace(/\*{3,}([^*\n]+?)\*{3,}/g, '$1');
+
+  // 2. Strip unnecessary bolding on ordinary words/terms (do not cross newlines)
+  // e.g. "The capital of Japan is **Tokyo**." -> "The capital of Japan is Tokyo."
+  cleaned = cleaned.replace(/\*\*([^*\n]+?)\*\*/g, '$1');
+
+  // 3. Strip unnecessary italics on single terms/phrases on the same line
+  cleaned = cleaned.replace(/(^|[\s(\[])\*([a-zA-Z0-9][a-zA-Z0-9 \t.,'’–\-_/]{0,60})\*([)\],.!?;\s]|$)/gm, '$1$2$3');
+
+  // 4. Clean single-bullet or single-number artifacts:
+  const lines = cleaned.split('\n');
+  const bulletIndices = [];
+  const numberedIndices = [];
+
+  lines.forEach((line, idx) => {
+    const trimmed = line.trim();
+    if (/^[-*•]\s+/.test(trimmed)) bulletIndices.push(idx);
+    if (/^\d+[\.\)]\s+/.test(trimmed)) numberedIndices.push(idx);
+  });
+
+  // If there is only ONE bullet item in the entire response, convert it to normal prose
+  if (bulletIndices.length === 1) {
+    const idx = bulletIndices[0];
+    lines[idx] = lines[idx].replace(/^(\s*)[-*•]\s+/, '$1');
+  }
+
+  // If there is only ONE numbered item in the entire response, convert it to normal prose
+  if (numberedIndices.length === 1) {
+    const idx = numberedIndices[0];
+    lines[idx] = lines[idx].replace(/^(\s*)\d+[\.\)]\s+/, '$1');
+  }
+
+  cleaned = lines.join('\n');
+
+  // 5. Remove unnecessary headings for very simple answers (<= 4 non-empty lines)
+  const nonEmptyLines = cleaned.split('\n').filter(l => l.trim().length > 0);
+  if (nonEmptyLines.length <= 4 && bulletIndices.length === 0 && numberedIndices.length === 0) {
+    const splitLines = cleaned.split('\n');
+    let firstNonEmptyIdx = -1;
+    for (let i = 0; i < splitLines.length; i++) {
+      if (splitLines[i].trim().length > 0) {
+        firstNonEmptyIdx = i;
+        break;
+      }
+    }
+
+    if (firstNonEmptyIdx >= 0) {
+      const firstLine = splitLines[firstNonEmptyIdx].trim();
+      const isHeading = /^#{1,6}\s+/.test(firstLine);
+      const isAnswerLabel = /^(answer|response|summary):\s*$/i.test(firstLine);
+
+      if (isHeading || isAnswerLabel) {
+        if (nonEmptyLines.length > 1) {
+          splitLines.splice(firstNonEmptyIdx, 1);
+          cleaned = splitLines.join('\n');
+        } else {
+          cleaned = cleaned.replace(/^#{1,6}\s+/, '');
+        }
+      }
+    }
+  }
+
+  // 6. Clean up stray leading heading hashes if any still remain on short answers
+  if (nonEmptyLines.length <= 3) {
+    cleaned = cleaned.replace(/^#{1,6}\s+/gm, '');
+  }
+
+  // 7. Clean up redundant trailing spaces and excessive blank lines
+  cleaned = cleaned
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+
+  return cleaned;
+}
 
 /**
  * Normalizes conversation history into Gemini's strictly alternating contents format.
@@ -251,8 +364,8 @@ Here are real-time web research findings retrieved via web search:
 ${contextSnippet}
 
 Instructions:
-1. Provide a comprehensive, accurate, and well-structured response directly answering the user's question based on these findings.
-2. Use markdown formatting with clear headings or bullet points where helpful.
+1. Provide a comprehensive, accurate, and direct response answering the user's question based on these findings in a natural conversational tone.
+2. Use clean structure (bullet points or numbered points) when it genuinely improves readability for multiple findings, without unnecessary bolding on individual words.
 3. Cite sources naturally using the provided findings and URLs.
 4. Keep the tone knowledgeable, objective, and conversational.`;
 
@@ -263,7 +376,7 @@ Instructions:
 
   if (geminiResult) {
     return {
-      answer: geminiResult.answer,
+      answer: cleanConversationalFormatting(geminiResult.answer, topic),
       model: `${geminiResult.model} Research`,
       source: 'tavily-web-research',
       sources,
@@ -274,7 +387,7 @@ Instructions:
 
   // Fallback to Tavily's built-in AI answer if Gemini is unavailable
   return {
-    answer: summaryAnswer || (sources.length > 0 ? sources[0].snippet : "Research completed, but no detailed summary could be synthesized."),
+    answer: cleanConversationalFormatting(summaryAnswer || (sources.length > 0 ? sources[0].snippet : "Research completed, but no detailed summary could be synthesized."), topic),
     model: 'tavily-search-agent',
     source: 'tavily-direct',
     sources,
@@ -337,7 +450,7 @@ export async function generateAIAnswer(userQuestion, options = {}) {
       const res = await callGeminiWithFallback(noDocContents, { modelTier });
       if (res) {
         return {
-          answer: res.answer,
+          answer: cleanConversationalFormatting(res.answer, userQuestion),
           model: res.model,
           source: 'gemini-direct',
           sources: []
@@ -403,13 +516,13 @@ export async function generateAIAnswer(userQuestion, options = {}) {
     }
 
     if (docContext) {
-      const promptSnippet = `Retrieved Document Excerpts from user's uploaded files:\n${docContext}\n\nInstructions: Answer the user's question accurately using these document excerpts. Cite the document title and page number where appropriate. If the excerpts do not contain the answer, state that clearly and use your general knowledge if helpful while clearly distinguishing the two.`;
+      const promptSnippet = `Retrieved Document Excerpts from user's uploaded files:\n${docContext}\n\nInstructions: Answer the user's question accurately using these document excerpts in a natural conversational tone. Cite the document title and page number where appropriate. If the excerpts do not contain the answer, state that clearly and use your general knowledge if helpful while clearly distinguishing the two.`;
       const docContents = buildGeminiContents(userQuestion, history, promptSnippet);
       const geminiResult = await callGeminiWithFallback(docContents, { modelTier });
 
       if (geminiResult) {
         return {
-          answer: geminiResult.answer,
+          answer: cleanConversationalFormatting(geminiResult.answer, userQuestion),
           model: geminiResult.model,
           source: 'gemini + user-document',
           contextMatched: matchedTitles,
@@ -448,7 +561,7 @@ export async function generateAIAnswer(userQuestion, options = {}) {
 
       if (geminiResult) {
         return {
-          answer: geminiResult.answer,
+          answer: cleanConversationalFormatting(geminiResult.answer, userQuestion),
           model: geminiResult.model,
           source: 'gemini + pinecone',
           contextMatched: kbMatches.map(m => m.title),
@@ -467,7 +580,7 @@ export async function generateAIAnswer(userQuestion, options = {}) {
 
   if (geminiResult) {
     return {
-      answer: geminiResult.answer,
+      answer: cleanConversationalFormatting(geminiResult.answer, userQuestion),
       model: geminiResult.model,
       source: 'gemini-direct',
       sources: []
@@ -507,7 +620,7 @@ export async function generateAIAnswer(userQuestion, options = {}) {
         const replyText = data.choices?.[0]?.message?.content;
         if (replyText) {
           return {
-            answer: replyText.trim(),
+            answer: cleanConversationalFormatting(replyText.trim(), userQuestion),
             model: 'gpt-4o-mini',
             source: 'openai-direct',
             sources: []
@@ -537,5 +650,6 @@ export default {
   callGeminiWithFallback,
   isWebResearchRequest,
   isDocumentRequest,
-  isCompanySupportRequest
+  isCompanySupportRequest,
+  cleanConversationalFormatting
 };

@@ -5,3 +5,4 @@ export const API_BASE_URL = `${BACKEND_URL}/api/chat`;
 export const HISTORY_URL = `${BACKEND_URL}/api/history`;
 export const DOCS_URL = `${BACKEND_URL}/api/documents`;
 export const AUTH_URL = `${BACKEND_URL}/api/auth`;
+export const CONVERSATIONS_URL = `${BACKEND_URL}/api/conversations`;

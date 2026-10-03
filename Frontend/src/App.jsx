@@ -4,22 +4,24 @@ import ChatHeader from './components/ChatHeader';
 import MessageList from './components/MessageList';
 import QuickPrompts from './components/QuickPrompts';
 import ChatInput from './components/ChatInput';
+import GeminiWelcome from './components/GeminiWelcome';
 import Sidebar from './components/Sidebar';
 import DocumentViewer from './components/DocumentViewer';
 import DocumentModal from './components/DocumentModal';
 import SettingsModal from './components/SettingsModal';
 import { FONTS } from './constants/fonts';
-import { API_BASE_URL, HISTORY_URL, DOCS_URL, BACKEND_URL } from './config/api';
+import { API_BASE_URL, HISTORY_URL, DOCS_URL, BACKEND_URL, CONVERSATIONS_URL } from './config/api';
 
-const CONVERSATIONS_KEY = 'gemini_conversations';
-const ACTIVE_CONV_KEY = 'gemini_active_conv_id';
 const FONT_STORAGE_KEY = 'gemini_font';
 const FONT_SIZE_STORAGE_KEY = 'gemini_font_size';
+
+const getStorageKey = (uid) => `afzal_ai_conversations_${uid || 'guest'}`;
+const getActiveConvKey = (uid) => `afzal_ai_active_conv_${uid || 'guest'}`;
 
 const INITIAL_GREETING = {
   id: 1,
   role: 'assistant',
-  text: "Hello! I'm Afzal AI, your general-purpose AI assistant. How can I help you today?",
+  text: "Hello! I'm Afzal AI, your personal AI assistant. How can I help you today?",
   time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
   model: "Afzal's AI",
   source: 'system'
@@ -33,55 +35,85 @@ const createDefaultConversation = () => ({
   updatedAt: Date.now()
 });
 
+const loadLocalConversations = (uid) => {
+  try {
+    const saved = localStorage.getItem(getStorageKey(uid));
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to parse saved conversations for user', e);
+  }
+  return [createDefaultConversation()];
+};
+
+const loadLocalActiveId = (uid, convList) => {
+  try {
+    const saved = localStorage.getItem(getActiveConvKey(uid));
+    if (saved && convList.some((c) => c.id === saved)) {
+      return saved;
+    }
+  } catch {}
+  return convList[0]?.id || null;
+};
+
 export default function App() {
-  // 1. Conversations & Chat History State
-  const [conversations, setConversations] = useState(() => {
-    try {
-      const saved = localStorage.getItem(CONVERSATIONS_KEY) || localStorage.getItem('afzal_ai_conversations');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
-        }
-      }
-    } catch (e) {
-      console.warn('Failed to parse saved conversations', e);
-    }
-    return [createDefaultConversation()];
-  });
+  // Clerk Authentication State
+  const { isSignedIn, user: clerkUser, isLoaded: isUserLoaded } = useUser();
+  const { getToken } = useAuth();
+  const { openSignIn, signOut } = useClerk();
+  const [authToken, setAuthToken] = useState(null);
 
-  const [activeConversationId, setActiveConversationId] = useState(() => {
-    try {
-      const savedActive = localStorage.getItem(ACTIVE_CONV_KEY) || localStorage.getItem('afzal_ai_active_conv_id');
-      if (savedActive) return savedActive;
-    } catch {
-      // ignore
+  useEffect(() => {
+    if (isSignedIn) {
+      getToken().then((token) => setAuthToken(token)).catch(() => {});
+    } else {
+      setAuthToken(null);
     }
-    try {
-      const saved = localStorage.getItem(CONVERSATIONS_KEY) || localStorage.getItem('afzal_ai_conversations');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed[0].id;
-        }
-      }
-    } catch {
-      // ignore
-    }
-    return null;
-  });
+  }, [isSignedIn, getToken]);
 
-  // Persist conversations to localStorage
+  const user = useMemo(() => {
+    if (!isSignedIn || !clerkUser) return null;
+    return {
+      id: clerkUser.id,
+      userId: clerkUser.id,
+      name: clerkUser.fullName || clerkUser.firstName || 'User',
+      email: clerkUser.primaryEmailAddress?.emailAddress || '',
+      avatar: clerkUser.imageUrl || ''
+    };
+  }, [isSignedIn, clerkUser]);
+
+  const currentUserId = user?.id || 'guest';
+
+  // 1. Conversations & Chat History State (Strictly scoped by Clerk user ID)
+  const [conversations, setConversations] = useState(() => loadLocalConversations(null));
+  const [activeConversationId, setActiveConversationId] = useState(() => loadLocalActiveId(null, conversations));
+
+  // Switch conversation state whenever user logs in, logs out, or switches accounts
+  useEffect(() => {
+    setDocuments([]);
+    setActiveDocument(null);
+    setWorkspaceMode('chat');
+    const list = loadLocalConversations(currentUserId);
+    const activeId = loadLocalActiveId(currentUserId, list);
+    setConversations(list);
+    setActiveConversationId(activeId);
+  }, [currentUserId]);
+
+  // Persist conversations to scoped localStorage
   useEffect(() => {
     try {
-      localStorage.setItem(CONVERSATIONS_KEY, JSON.stringify(conversations));
+      localStorage.setItem(getStorageKey(currentUserId), JSON.stringify(conversations));
       if (activeConversationId) {
-        localStorage.setItem(ACTIVE_CONV_KEY, activeConversationId);
+        localStorage.setItem(getActiveConvKey(currentUserId), activeConversationId);
       }
     } catch (e) {
       console.warn('Could not save conversations to localStorage', e);
     }
-  }, [conversations, activeConversationId]);
+  }, [conversations, activeConversationId, currentUserId]);
 
   // Active conversation helper
   const activeConversation = useMemo(() => {
@@ -167,36 +199,13 @@ export default function App() {
   const [isDocModalOpen, setIsDocModalOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  // Clerk Authentication State
-  const { isSignedIn, user: clerkUser, isLoaded: isUserLoaded } = useUser();
-  const { getToken } = useAuth();
-  const { openSignIn, signOut } = useClerk();
-  const [authToken, setAuthToken] = useState(null);
-
-  useEffect(() => {
-    if (isSignedIn) {
-      getToken().then((token) => setAuthToken(token)).catch(() => {});
-    } else {
-      setAuthToken(null);
-    }
-  }, [isSignedIn, getToken]);
-
-  const user = useMemo(() => {
-    if (!isSignedIn || !clerkUser) return null;
-    return {
-      id: clerkUser.id,
-      userId: clerkUser.id,
-      name: clerkUser.fullName || clerkUser.firstName || 'User',
-      email: clerkUser.primaryEmailAddress?.emailAddress || '',
-      avatar: clerkUser.imageUrl || ''
-    };
-  }, [isSignedIn, clerkUser]);
 
   // Documents State
   const [documents, setDocuments] = useState([]);
 
-  // Load chat history for backend sync if supported
-  const loadHistory = useCallback(async () => {
+  // Load past messages for a specific session
+  const loadConversationHistory = useCallback(async (sessionId) => {
+    if (!sessionId) return;
     try {
       const headers = {};
       if (isSignedIn) {
@@ -205,20 +214,77 @@ export default function App() {
           headers['Authorization'] = `Bearer ${activeToken}`;
         }
       }
-      const res = await fetch(HISTORY_URL, { headers });
+      const res = await fetch(`${HISTORY_URL}?sessionId=${encodeURIComponent(sessionId)}`, { headers });
       if (res.ok) {
         const data = await res.json();
-        if (data.messages && data.messages.length > 0) {
-          setConversations((prev) => {
-            const currentActiveId = activeConversationId || (prev[0] && prev[0].id);
-            return prev.map((c) => (c.id === currentActiveId ? { ...c, messages: data.messages } : c));
-          });
+        if (Array.isArray(data.messages) && data.messages.length > 0) {
+          setConversations((prev) =>
+            prev.map((c) => (c.id === sessionId ? { ...c, messages: data.messages } : c))
+          );
         }
       }
     } catch (err) {
-      console.warn('[App] Could not load past history from server:', err.message);
+      console.warn('[App] Could not load conversation history:', err.message);
     }
-  }, [activeConversationId, isSignedIn, getToken]);
+  }, [isSignedIn, getToken]);
+
+  // Load chat history for active conversation
+  const loadHistory = useCallback(async () => {
+    if (activeConversationId) {
+      await loadConversationHistory(activeConversationId);
+    }
+  }, [activeConversationId, loadConversationHistory]);
+
+  // Load user's conversations from backend
+  const loadConversationsFromBackend = useCallback(async () => {
+    if (!isSignedIn) return;
+    try {
+      const activeToken = await getToken();
+      const res = await fetch(CONVERSATIONS_URL, {
+        headers: activeToken ? { Authorization: `Bearer ${activeToken}` } : {}
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.conversations) && data.conversations.length > 0) {
+          let topSessionId = null;
+          setConversations((prev) => {
+            const merged = [...prev];
+            for (const bc of data.conversations) {
+              const sid = bc.sessionId || bc.id;
+              const idx = merged.findIndex((c) => c.id === sid);
+              if (idx >= 0) {
+                merged[idx] = { ...merged[idx], title: bc.title || merged[idx].title };
+              } else {
+                merged.push({
+                  id: sid,
+                  title: bc.title || 'New chat',
+                  messages: [INITIAL_GREETING],
+                  createdAt: new Date(bc.createdAt).getTime() || Date.now(),
+                  updatedAt: new Date(bc.updatedAt).getTime() || Date.now()
+                });
+              }
+            }
+            // Remove empty default conversations if real backend conversations exist
+            const filtered = merged.filter((c) => {
+              const isBlankDefault = (c.messages?.length === 1 && c.messages[0].role === 'assistant' && (c.title === 'New chat' || c.title === 'New Chat'));
+              const existsInBackend = data.conversations.some((bc) => (bc.sessionId || bc.id) === c.id);
+              return existsInBackend || !isBlankDefault;
+            });
+            const sorted = (filtered.length > 0 ? filtered : merged).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+            topSessionId = sorted[0]?.id;
+            return sorted;
+          });
+          // If a top conversation exists, ensure it is selected and load its messages
+          if (topSessionId) {
+            setActiveConversationId((cur) => (cur ? cur : topSessionId));
+            loadConversationHistory(topSessionId);
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('[App] Notice: backend conversation sync:', err.message);
+    }
+  }, [isSignedIn, getToken, loadConversationHistory]);
 
   // Load user's uploaded documents
   const loadDocuments = useCallback(async () => {
@@ -247,6 +313,9 @@ export default function App() {
     setDocuments([]);
     setActiveDocument(null);
     setWorkspaceMode('chat');
+    const guestList = loadLocalConversations('guest');
+    setConversations(guestList);
+    setActiveConversationId(guestList[0]?.id || null);
   }, [signOut]);
 
   const handleOpenAuth = useCallback(() => {
@@ -257,8 +326,9 @@ export default function App() {
   useEffect(() => {
     if (!isUserLoaded) return;
     loadDocuments();
+    loadConversationsFromBackend();
     loadHistory();
-  }, [isSignedIn, isUserLoaded, loadDocuments, loadHistory]);
+  }, [isSignedIn, isUserLoaded, loadDocuments, loadConversationsFromBackend, loadHistory]);
 
   // Conversational Management Handlers
   const handleNewChat = () => {
@@ -271,13 +341,27 @@ export default function App() {
   const handleSelectConversation = (id) => {
     setActiveConversationId(id);
     setIsMobileSidebarOpen(false);
+    loadConversationHistory(id);
   };
 
   const handleRenameConversation = (id, newTitle) => {
     if (!newTitle.trim()) return;
+    const cleanTitle = newTitle.trim().replace(/^[#\s*]+/, '');
     setConversations((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, title: newTitle.trim(), updatedAt: Date.now() } : c))
+      prev.map((c) => (c.id === id ? { ...c, title: cleanTitle, updatedAt: Date.now() } : c))
     );
+    if (isSignedIn) {
+      getToken().then((token) => {
+        fetch(`${CONVERSATIONS_URL}/${id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          },
+          body: JSON.stringify({ title: cleanTitle })
+        }).catch(() => {});
+      });
+    }
   };
 
   const handleDeleteConversation = (id) => {
@@ -293,15 +377,31 @@ export default function App() {
       }
       return remaining;
     });
+    if (isSignedIn) {
+      getToken().then((token) => {
+        fetch(`${CONVERSATIONS_URL}/${id}`, {
+          method: 'DELETE',
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        }).catch(() => {});
+      });
+    }
   };
 
   const handleClearAllConversations = () => {
     const fresh = createDefaultConversation();
     setConversations([fresh]);
     setActiveConversationId(fresh.id);
+    if (isSignedIn) {
+      getToken().then((token) => {
+        fetch(CONVERSATIONS_URL, {
+          method: 'DELETE',
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        }).catch(() => {});
+      });
+    }
   };
 
-  // Helper to append message to active conversation
+  // Helper to append message to active conversation with clean auto-titling
   const appendMessageToActiveConv = (message, shouldAutoTitle = false) => {
     setConversations((prev) => {
       return prev.map((conv) => {
@@ -309,8 +409,20 @@ export default function App() {
         let newTitle = conv.title;
         // Auto-generate title from first user query if still named "New chat"
         if (shouldAutoTitle && (conv.title === 'New chat' || conv.title === 'New Chat' || !conv.title)) {
-          const cleanText = message.text.replace(/^[#\s?!*]+/, '').trim();
-          newTitle = cleanText.length > 28 ? cleanText.substring(0, 28) + '...' : cleanText;
+          const cleanText = message.text.replace(/^[#\s?!*–-]+/, '').trim();
+          newTitle = cleanText.length > 28 ? cleanText.substring(0, 28).trim() + '...' : cleanText;
+          if (isSignedIn) {
+            getToken().then((token) => {
+              fetch(`${CONVERSATIONS_URL}/${conv.id}`, {
+                method: 'PATCH',
+                headers: {
+                  'Content-Type': 'application/json',
+                  ...(token ? { Authorization: `Bearer ${token}` } : {})
+                },
+                body: JSON.stringify({ title: newTitle })
+              }).catch(() => {});
+            });
+          }
         }
         return {
           ...conv,
@@ -421,7 +533,10 @@ export default function App() {
         const activeToken = await getToken();
         if (activeToken) headers['Authorization'] = `Bearer ${activeToken}`;
       }
-      await fetch(HISTORY_URL, { method: 'DELETE', headers });
+      const url = activeConversationId
+        ? `${HISTORY_URL}?sessionId=${encodeURIComponent(activeConversationId)}`
+        : HISTORY_URL;
+      await fetch(url, { method: 'DELETE', headers });
     } catch (err) {
       console.warn('Could not clear history:', err.message);
     }
@@ -592,42 +707,66 @@ export default function App() {
         {/* 2. Central Workspace Switcher (Chat | Research & Synthesis | Artifacts) */}
         {workspaceMode === 'chat' ? (
           /* Conversational Querying Mode: Single-column chat view */
-          <div className="gemini-conversational-workspace">
-            <main className="gemini-chat-main-area">
-              <MessageList
-                messages={messages}
-                isLoading={isLoading}
-                user={user}
-                onSendMessage={handleSendMessage}
-                onOpenDocs={() => setIsDocModalOpen(true)}
-                onSwitchToResearch={handleSelectDocumentForResearch}
-                documents={documents}
-              />
-            </main>
+          <div className={`gemini-conversational-workspace ${userMessageCount === 0 ? 'is-home-screen' : 'is-chat-active'}`}>
+            {userMessageCount === 0 ? (
+              /* Home Screen Clean Hierarchy */
+              <div className="home-screen-hero-container">
+                {/* 1. Greeting & 2. Running "What are we working on today?" */}
+                <GeminiWelcome user={clerkUser || user} />
 
-            {/* Bottom Floating Gemini Capsule & Quick Suggestions */}
-            <footer className="gemini-footer-dock">
-              {userMessageCount > 0 && (
-                <QuickPrompts
-                  onSelectPrompt={handleSendMessage}
-                  disabled={isLoading}
-                  currentMode={mode}
-                />
-              )}
+                {/* 3. Small prompt suggestions & 4. Main chat input */}
+                <div className="home-hero-input-area">
+                  <QuickPrompts
+                    onSelectPrompt={handleSendMessage}
+                    disabled={isLoading}
+                    documents={documents}
+                  />
 
-              <ChatInput
-                onSendMessage={handleSendMessage}
-                isLoading={isLoading}
-                prefilledText={prefilledInput}
-                onOpenDocs={() => setIsDocModalOpen(true)}
-                currentMode={mode}
-                onModeChange={setMode}
-                activeDocument={activeDocument}
-                onClearActiveDocument={() => setActiveDocument(null)}
-                onDropFile={handleDirectPdfUpload}
-                workspaceMode={workspaceMode}
-              />
-            </footer>
+                  <ChatInput
+                    onSendMessage={handleSendMessage}
+                    isLoading={isLoading}
+                    prefilledText={prefilledInput}
+                    onOpenDocs={() => setIsDocModalOpen(true)}
+                    currentMode={mode}
+                    onModeChange={setMode}
+                    activeDocument={activeDocument}
+                    onClearActiveDocument={() => setActiveDocument(null)}
+                    onDropFile={handleDirectPdfUpload}
+                    workspaceMode={workspaceMode}
+                  />
+                </div>
+              </div>
+            ) : (
+              /* Active Chat Stream */
+              <>
+                <main className="gemini-chat-main-area">
+                  <MessageList
+                    messages={messages}
+                    isLoading={isLoading}
+                    user={user}
+                    onSendMessage={handleSendMessage}
+                    onOpenDocs={() => setIsDocModalOpen(true)}
+                    onSwitchToResearch={handleSelectDocumentForResearch}
+                    documents={documents}
+                  />
+                </main>
+
+                <footer className="gemini-footer-dock">
+                  <ChatInput
+                    onSendMessage={handleSendMessage}
+                    isLoading={isLoading}
+                    prefilledText={prefilledInput}
+                    onOpenDocs={() => setIsDocModalOpen(true)}
+                    currentMode={mode}
+                    onModeChange={setMode}
+                    activeDocument={activeDocument}
+                    onClearActiveDocument={() => setActiveDocument(null)}
+                    onDropFile={handleDirectPdfUpload}
+                    workspaceMode={workspaceMode}
+                  />
+                </footer>
+              </>
+            )}
           </div>
         ) : workspaceMode === 'research' ? (
           /* Document Research Mode: Split-pane layout */

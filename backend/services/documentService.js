@@ -266,25 +266,37 @@ export async function getUserDocuments(userId) {
  * Retrieves a single document by ID, including its chunks.
  */
 export async function getDocumentById(userId, documentId) {
+  const uid = userId ? userId.toString() : '';
+  if (!uid) return null;
+
   let doc = null;
   try {
-    doc = await Document.findOne({ _id: documentId, userId: userId.toString() }).lean();
+    doc = await Document.findOne({ _id: documentId, userId: uid }).lean();
     if (doc) return doc;
   } catch (err) {
     console.warn('[DocumentService] MongoDB findOne failed, checking memory cache:', err.message);
   }
 
-  // Fallback to memory
-  return memoryDocuments.get(documentId.toString()) || null;
+  // Fallback to memory with strict user-level isolation
+  const memDoc = memoryDocuments.get(documentId.toString());
+  if (memDoc && memDoc.userId === uid) {
+    return memDoc;
+  }
+  return null;
 }
 
 /**
  * Deletes a document, removing vectors from Pinecone namespace and record from MongoDB.
  */
 export async function deleteUserDocument(userId, documentId) {
+  const uid = userId ? userId.toString() : '';
+  if (!uid) {
+    throw new Error('Unauthorized: User identity required to delete documents.');
+  }
+
   let doc = null;
   try {
-    doc = await Document.findOne({ _id: documentId, userId: userId.toString() });
+    doc = await Document.findOne({ _id: documentId, userId: uid });
   } catch {
     doc = memoryDocuments.get(documentId.toString());
   }
@@ -293,7 +305,7 @@ export async function deleteUserDocument(userId, documentId) {
     doc = memoryDocuments.get(documentId.toString());
   }
 
-  if (!doc) {
+  if (!doc || doc.userId !== uid) {
     throw new Error('Document not found or unauthorized.');
   }
 
@@ -303,22 +315,20 @@ export async function deleteUserDocument(userId, documentId) {
     try {
       const vectorIds = doc.chunks.map((c) => c.vectorId).filter(Boolean);
       if (vectorIds.length > 0) {
-        const userNamespace = pineconeIndex.namespace(`user_${userId}`);
+        const userNamespace = pineconeIndex.namespace(`user_${uid}`);
         await userNamespace.deleteMany(vectorIds);
-        console.log(`[DocumentService] Removed ${vectorIds.length} vectors from Pinecone namespace "user_${userId}".`);
+        console.log(`[DocumentService] Removed ${vectorIds.length} vectors from Pinecone namespace "user_${uid}".`);
       }
     } catch (pcErr) {
       console.warn(`[DocumentService] Pinecone vector cleanup notice:`, pcErr.message);
     }
   }
 
-  // Delete from MongoDB and memory
+  // Delete from MongoDB and memory strictly scoped to user
   try {
-    await Document.deleteOne({ _id: documentId });
+    await Document.deleteOne({ _id: documentId, userId: uid });
   } catch {}
   memoryDocuments.delete(documentId.toString());
-  console.log(`[DocumentService] Deleted document ${documentId}.`);
-
   return { success: true, id: documentId };
 }
 
