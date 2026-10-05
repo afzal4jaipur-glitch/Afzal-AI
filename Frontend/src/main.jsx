@@ -5,8 +5,17 @@ import { dark } from '@clerk/themes';
 import './index.css';
 import App from './App.jsx';
 
-// Read publishable key from environment or fallback to project default test key
-const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || 'pk_test_aHVtYW5lLWdhci0xOTQ1LmNsZXJrLmFjY291bnRzLmRldiQ';
+// Clean and sanitize the Clerk Publishable Key (strips quotes, whitespace, or accidental env var prefixes/secret keys)
+const sanitizePublishableKey = (key) => {
+  if (!key || typeof key !== 'string') return '';
+  const trimmed = key.trim().replace(/^["']|["']$/g, '');
+  // Match standard Clerk publishable key pattern: pk_test_... or pk_live_...
+  const match = trimmed.match(/pk_(?:test|live)_[a-zA-Z0-9_$]+/);
+  return match ? match[0] : (trimmed.startsWith('pk_') ? trimmed : '');
+};
+
+const DEFAULT_CLERK_KEY = 'pk_test_aHVtYW5lLWdhci0xOTQ1LmNsZXJrLmFjY291bnRzLmRldiQ';
+const PUBLISHABLE_KEY = sanitizePublishableKey(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY) || DEFAULT_CLERK_KEY;
 
 function Root() {
   const [theme, setTheme] = useState(() => localStorage.getItem('app_theme') || 'dark');
